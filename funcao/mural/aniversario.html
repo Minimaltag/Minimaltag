@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Tabela de Aniversários</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f4f7fc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+
+    h1 {
+      color: #2d3748;
+      font-size: 2.2rem;
+      font-weight: 600;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1000px;
+      background-color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      padding: 20px;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 1rem;
+      color: #4a5568;
+    }
+
+    th, td {
+      padding: 16px;
+      text-align: left;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    th {
+      background-color: #edf2f7;
+      font-weight: 600;
+      color: #2d3748;
+      text-transform: uppercase;
+      font-size: 0.9rem;
+    }
+
+    td {
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+
+    tr {
+      transition: background-color 0.3s ease;
+    }
+
+    tr:hover {
+      background-color: #f7fafc;
+    }
+
+    tr.highlight-next {
+      background-color: #e6fffa;
+      font-weight: 500;
+    }
+
+    tr.past-date {
+      color: #a0aec0;
+    }
+
+    .admin-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin: 20px auto;
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      background-color: #4a5568; /* Cor mais neutra e discreta */
+      color: #e2e8f0;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      opacity: 0.8; /* Reduz opacidade para maior discrição */
+    }
+
+    .admin-btn:hover {
+      background-color: #5a6a82; /* Tom mais claro no hover */
+      opacity: 0.9;
+    }
+
+    .admin-btn:active {
+      opacity: 1;
+    }
+
+    #confettiCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 15px;
+      }
+
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tr {
+        margin-bottom: 20px;
+        border-bottom: 2px solid #e2e8f0;
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      }
+
+      td {
+        padding: 12px 16px;
+        position: relative;
+        text-align: right;
+        border-bottom: none;
+      }
+
+      td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 16px;
+        top: 12px;
+        font-weight: 500;
+        color: #2d3748;
+        text-align: left;
+      }
+
+      .admin-btn {
+        width: 100%;
+        padding: 10px;
+        font-size: 0.8rem;
+      }
+
+      h1 {
+        font-size: 1.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <script type="module">
+    import { auth } from '../../js/firebase-config.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = "../../index.html";
+      }
+    });
+  </script>
+
+  <h1>Aniversariantes</h1>
+  <div class="container">
+    <table id="birthdayTable">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Data de Nascimento</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <button class="admin-btn" onclick="openAdminPanel()">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+    </svg>
+    Painel Administrativo
+  </button>
+  <canvas id="confettiCanvas"></canvas>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+    apiKey: "AIzaSyC5wHhdIZlY9txtYkN88R-67lIP5FZlFpY",
+    authDomain: "mtag-1c04d.firebaseapp.com",
+    projectId: "mtag-1c04d",
+    storageBucket: "mtag-1c04d.firebasestorage.app",
+    messagingSenderId: "487741931549",
+    appId: "1:487741931549:web:cf45afe3c7b5cda7de06f4"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const collectionPath = "niver";
+
+    function sortByMonth(data) {
+      return data.sort((a, b) => {
+        const [da, ma] = a.data.split("/").map(Number);
+        const [db, mb] = b.data.split("/").map(Number);
+        return ma !== mb ? ma - mb : da - db;
+      });
+    }
+
+    async function getAllData() {
+      const snapshot = await db.collection(collectionPath).get();
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    }
+
+    async function renderTable() {
+      const tableBody = document.querySelector("#birthdayTable tbody");
+      let data = await getAllData();
+      data = sortByMonth(data);
+      tableBody.innerHTML = "";
+
+      const today = new Date();
+      const todayDay = today.getDate();
+      const todayMonth = today.getMonth() + 1;
+      const todayDate = new Date(today.getFullYear(), todayMonth - 1, todayDay).setHours(0,0,0,0);
+
+      const nextBirthdayIndex = getNextBirthdayIndex(data);
+
+      data.forEach((item, index) => {
+        const [day, month] = item.data.split("/").map(Number);
+        const thisYearBirthday = new Date(today.getFullYear(), month - 1, day).setHours(0,0,0,0);
+
+        const isToday = (todayDay === day && todayMonth === month);
+        const isPast = thisYearBirthday < todayDate;
+        const isNext = index === nextBirthdayIndex;
+
+        const tr = document.createElement("tr");
+        if (isNext) tr.classList.add("highlight-next");
+        if (isPast && !isToday) tr.classList.add("past-date");
+
+        tr.innerHTML = `
+          <td data-label="Nome">${item.nome}</td>
+          <td data-label="Data de Nascimento">${item.data}</td>
+        `;
+        tableBody.appendChild(tr);
+
+        if (isToday) launchConfetti();
+      });
+    }
+
+    function getNextBirthdayIndex(data) {
+      const today = new Date();
+      const current = today.setHours(0, 0, 0, 0);
+
+      let upcoming = data.map((item, index) => {
+        const [day, month] = item.data.split("/").map(Number);
+        let date = new Date(today.getFullYear(), month - 1, day).setHours(0, 0, 0, 0);
+        if (date < current) date = new Date(today.getFullYear() + 1, month - 1, day).setHours(0, 0, 0, 0);
+        return { index, timeDiff: date - current };
+      });
+
+      upcoming.sort((a, b) => a.timeDiff - b.timeDiff);
+      return upcoming[0]?.index ?? -1;
+    }
+
+    function openAdminPanel() {
+      const password = prompt("Digite a senha administrativa:");
+      if (password === "0000") {
+        showAdminOptions();
+      } else {
+        alert("Senha incorreta!");
+      }
+    }
+
+    async function showAdminOptions() {
+      const action = prompt("Escolha uma ação:\n1. Adicionar Aniversariante\n2. Deletar Aniversariante");
+      if (action === "1") {
+        const name = prompt("Nome do aniversariante:");
+        const date = prompt("Data de nascimento (dd/mm/aaaa):");
+        if (name && date) {
+          await db.collection(collectionPath).add({ nome: name, data: date });
+          renderTable();
+        }
+      } else if (action === "2") {
+        const data = await getAllData();
+        let options = "Escolha um aniversariante para deletar:\n";
+        data.forEach((item, index) => {
+          options += `${index + 1}. ${item.nome} (${item.data})\n`;
+        });
+        const choice = prompt(options);
+        const index = parseInt(choice) - 1;
+        if (index >= 0 && index < data.length) {
+          if (confirm(`Deseja excluir ${data[index].nome}?`)) {
+            await db.collection(collectionPath).doc(data[index].id).delete();
+            renderTable();
+          }
+        } else {
+          alert("Seleção inválida!");
+        }
+      }
+    }
+
+    function launchConfetti() {
+      const duration = 5000;
+      const end = Date.now() + duration;
+      const canvas = document.getElementById('confettiCanvas');
+      const ctx = canvas.getContext('2d');
+      let particles = [];
+
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      function randomColor() {
+        const colors = [
+          '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4',
+          '#ffeead', '#d4a5a5', '#9b59b6', '#3498db'
+        ];
+        return colors[Math.floor(Math.random() * colors.length)];
+      }
+
+      function createParticles() {
+        for (let i = 0; i < 150; i++) {
+          particles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * -canvas.height / 2,
+            size: Math.random() * 8 + 4,
+            shape: Math.random() < 0.33 ? 'circle' : Math.random() < 0.5 ? 'rect' : 'triangle',
+            speedX: (Math.random() * 4 - 2),
+            speedY: Math.random() * 3 + 2,
+            rotation: Math.random() * 360,
+            rotationSpeed: Math.random() * 10 - 5,
+            opacity: 1,
+            color: randomColor(),
+            gravity: 0.05,
+          });
+        }
+      }
+
+      function drawParticle(p) {
+        ctx.save();
+        ctx.globalAlpha = p.opacity;
+        ctx.fillStyle = p.color;
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+
+        if (p.shape === 'circle') {
+          ctx.beginPath();
+          ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (p.shape === 'rect') {
+          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+        } else if (p.shape === 'triangle') {
+          ctx.beginPath();
+          ctx.moveTo(0, -p.size / 2);
+          ctx.lineTo(p.size / 2, p.size / 2);
+          ctx.lineTo(-p.size / 2, p.size / 2);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        ctx.restore();
+      }
+
+      function updateParticles() {
+        for (let p of particles) {
+          p.speedY += p.gravity;
+          p.y += p.speedY;
+          p.x += p.speedX;
+          p.rotation += p.rotationSpeed;
+          p.opacity = Math.max(0, p.opacity - 0.005);
+
+          if (p.y > canvas.height + p.size || p.opacity <= 0) {
+            p.y = -p.size;
+            p.x = Math.random() * canvas.width;
+            p.opacity = 1;
+            p.speedY = Math.random() * 3 + 2;
+            p.speedX = Math.random() * 4 - 2;
+            p.rotation = Math.random() * 360;
+          }
+        }
+      }
+
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => drawParticle(p));
+        updateParticles();
+
+        if (Date.now() < end) {
+          requestAnimationFrame(animate);
+        } else {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+      }
+
+      createParticles();
+      animate();
+    }
+
+    window.onload = renderTable;
+  </script>
+</body>
+</html>
