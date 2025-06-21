@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Memória Defesa Civil</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f2f4f8;
+      text-align: center;
+      color: #333;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+      color: #002f6c;
+    }
+
+    .placar {
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+
+    .tempo {
+      margin-bottom: 15px;
+      color: #2980b9;
+    }
+
+    .tabuleiro {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      width: fit-content;
+      margin: 0 auto 20px auto;
+      perspective: 1000px;
+    }
+
+    .card {
+      position: relative;
+      width: 80px;
+      aspect-ratio: 1/1;
+      transform-style: preserve-3d;
+      transition: transform 0.6s ease;
+      cursor: pointer;
+      border-radius: 10px;
+      border: 2px solid #002f6c;
+    }
+
+    .card.virado {
+      transform: rotateY(180deg);
+    }
+
+    .face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backface-visibility: hidden;
+      font-size: 24px;
+      user-select: none;
+    }
+
+    .frente {
+      background: #ffffff;
+      color: #002f6c;
+      font-weight: bold;
+      font-size: 22px;
+    }
+
+    .verso {
+      background: #e0e6ed;
+      transform: rotateY(180deg);
+      font-size: 38px;
+    }
+
+    .modal,
+    .inicio,
+    .popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(1);
+      background: white;
+      padding: 20px 30px;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      z-index: 999;
+      user-select: none;
+      text-align: center;
+      min-width: 280px;
+      max-width: 90vw;
+    }
+
+    .modal.hidden,
+    .inicio.hidden,
+    .popup.hidden {
+      display: none;
+    }
+
+    .modal h2,
+    .inicio h2,
+    .popup h2 {
+      margin-bottom: 10px;
+      color: #002f6c;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin: 10px 5px 0 5px;
+      border: none;
+      border-radius: 5px;
+      background-color: #002f6c;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.2s ease;
+    }
+
+    button:hover {
+      background-color: #00509e;
+    }
+
+    @keyframes zoomInOut {
+      0% {
+        transform: translate(-50%, -50%) scale(0.7);
+        opacity: 0;
+      }
+      50% {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(0.7);
+        opacity: 0;
+      }
+    }
+
+    #popupAcertou {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.7);
+      background: #fff;
+      border: 2px solid #27ae60;
+      padding: 20px 30px;
+      border-radius: 10px;
+      font-size: 28px;
+      font-weight: bold;
+      color: #27ae60;
+      animation: zoomInOut 1.2s ease forwards;
+      z-index: 1000;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<script type="module">
+    import { auth } from '../../js/firebase-config.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        // Se não estiver logado, redireciona para login
+        window.location.href = "../../index.html";
+      }
+    });
+  </script>
+<body>
+  <h1>Jogo da Memória - Defesa Civil</h1>
+  <div class="placar" id="placar"></div>
+  <div class="tempo" id="tempo"></div>
+
+  <div class="tabuleiro" id="tabuleiro"></div>
+
+  <div class="modal hidden" id="modal">
+    <h2 id="mensagemFinal"></h2>
+    <button onclick="reiniciarJogo()">Jogar Novamente</button>
+  </div>
+
+  <div class="inicio" id="inicio">
+    <h2>Escolha o modo de jogo</h2>
+    <button onclick="iniciarJogo(1)">1 Jogador</button>
+    <button onclick="iniciarJogo(2)">2 Jogadores</button>
+  </div>
+
+  <div class="popup hidden" id="popupAcertou">Você Achou!</div>
+
+  <div class="popup hidden" id="popupTrocaJogador">
+    <h2>Troca de Jogador</h2>
+    <p id="textoTrocaJogador"></p>
+    <button onclick="fecharPopupTroca()">Continuar</button>
+  </div>
+
+  <script>
+    const emojis = ["🚒", "🚨", "🧯", "🛟", "⛑️", "🧑‍🚒", "📢", "🌪️", "💧", "🔥", "🚑", "🗺️"];
+    const tabuleiro = document.getElementById("tabuleiro");
+    const placar = document.getElementById("placar");
+    const tempo = document.getElementById("tempo");
+    const modal = document.getElementById("modal");
+    const mensagemFinal = document.getElementById("mensagemFinal");
+    const inicio = document.getElementById("inicio");
+    const popupAcertou = document.getElementById("popupAcertou");
+    const popupTrocaJogador = document.getElementById("popupTrocaJogador");
+    const textoTrocaJogador = document.getElementById("textoTrocaJogador");
+
+    let modo = 1;
+    let jogadorAtual = 1;
+    let pontos = [0, 0];
+    let primeiro = null;
+    let segundo = null;
+    let travado = false;
+    let timer = null;
+    let tempoDecorrido = 0;
+    let esperandoPopupTroca = false;
+    let recordTempo = localStorage.getItem("melhorTempo") || null;
+
+    function iniciarJogo(m) {
+      modo = m;
+      inicio.classList.add("hidden");
+      criarTabuleiro();
+
+      pontos = [0, 0];
+      jogadorAtual = 1;
+      primeiro = null;
+      segundo = null;
+      travado = false;
+      tempoDecorrido = 0;
+      esperandoPopupTroca = false;
+      atualizarPlacar();
+      tempo.textContent = "";
+
+      if (modo === 1) {
+        timer = setInterval(() => {
+          tempoDecorrido++;
+          tempo.textContent = `⏱️ Tempo: ${formatarTempo(tempoDecorrido)}`;
+        }, 1000);
+      } else {
+        tempo.textContent = "";
+        mostrarPopupTroca(`É a vez do Jogador ${jogadorAtual}`);
+      }
+    }
+
+    function criarTabuleiro() {
+      tabuleiro.innerHTML = "";
+      let pares = [...emojis].slice(0, 12);
+      const cartas = [...pares, ...pares];
+      cartas.sort(() => 0.5 - Math.random());
+
+      cartas.forEach((emoji) => {
+        const card = document.createElement("div");
+        card.classList.add("card");
+        card.dataset.valor = emoji;
+
+        const frente = document.createElement("div");
+        frente.classList.add("face", "frente");
+        frente.textContent = "DC";
+
+        const verso = document.createElement("div");
+        verso.classList.add("face", "verso");
+        verso.textContent = emoji;
+
+        card.appendChild(frente);
+        card.appendChild(verso);
+        tabuleiro.appendChild(card);
+
+        card.addEventListener("click", () => virarCarta(card));
+      });
+    }
+
+    function virarCarta(card) {
+      if (travado || card.classList.contains("virado") || esperandoPopupTroca) return;
+
+      card.classList.add("virado");
+
+      if (!primeiro) {
+        primeiro = card;
+      } else {
+        segundo = card;
+        travado = true;
+
+        if (primeiro.dataset.valor === segundo.dataset.valor) {
+          pontos[jogadorAtual - 1]++;
+          mostrarPopupAcertou();
+
+          setTimeout(() => {
+            primeiro = segundo = null;
+            travado = false;
+            atualizarPlacar();
+            verificarFim();
+          }, 1000);
+        } else {
+          setTimeout(() => {
+            primeiro.classList.remove("virado");
+            segundo.classList.remove("virado");
+            primeiro = segundo = null;
+
+            if (modo === 2) {
+              jogadorAtual = jogadorAtual === 1 ? 2 : 1;
+              atualizarPlacar();
+              mostrarPopupTroca(`É a vez do Jogador ${jogadorAtual}`);
+            } else {
+              atualizarPlacar();
+            }
+            travado = false;
+          }, 1000);
+        }
+      }
+    }
+
+    function atualizarPlacar() {
+      if (modo === 1) {
+        let texto = `✅ Pares encontrados: ${pontos[0]}`;
+        if (recordTempo) {
+          texto += ` | 🕒 Melhor tempo: ${formatarTempo(recordTempo)}`;
+        }
+        placar.textContent = texto;
+      } else {
+        placar.textContent = `🎮 Jogador 1: ${pontos[0]} | Jogador 2: ${pontos[1]} | Turno: Jogador ${jogadorAtual}`;
+      }
+    }
+
+    function verificarFim() {
+      const cartasViradas = document.querySelectorAll(".card.virado").length;
+      if (cartasViradas === emojis.length * 2) {
+        clearInterval(timer);
+        if (modo === 1) {
+          if (!recordTempo || tempoDecorrido < recordTempo) {
+            recordTempo = tempoDecorrido;
+            localStorage.setItem("melhorTempo", recordTempo);
+          }
+          atualizarPlacar();
+          mostrarModal(`Parabéns! Você encontrou todos os pares.\nTempo: ${formatarTempo(tempoDecorrido)}`);
+        } else {
+          let vencedor =
+            pontos[0] > pontos[1]
+              ? "Jogador 1"
+              : pontos[1] > pontos[0]
+              ? "Jogador 2"
+              : "Empate";
+          mostrarModal(`Fim de jogo! ${vencedor} venceu. 🏆`);
+        }
+      }
+    }
+
+    function mostrarModal(mensagem) {
+      mensagemFinal.textContent = mensagem;
+      modal.classList.remove("hidden");
+    }
+
+    function reiniciarJogo() {
+      modal.classList.add("hidden");
+      inicio.classList.remove("hidden");
+      pontos = [0, 0];
+      jogadorAtual = 1;
+      primeiro = null;
+      segundo = null;
+      travado = false;
+      esperandoPopupTroca = false;
+      clearInterval(timer);
+    }
+
+    function formatarTempo(segundos) {
+      const min = Math.floor(segundos / 60).toString().padStart(2, "0");
+      const sec = (segundos % 60).toString().padStart(2, "0");
+      return `${min}:${sec}`;
+    }
+
+    function mostrarPopupAcertou() {
+      popupAcertou.classList.remove("hidden");
+      setTimeout(() => {
+        popupAcertou.classList.add("hidden");
+      }, 1200);
+    }
+
+    function mostrarPopupTroca(texto) {
+      esperandoPopupTroca = true;
+      textoTrocaJogador.textContent = texto;
+      popupTrocaJogador.classList.remove("hidden");
+    }
+
+    function fecharPopupTroca() {
+      popupTrocaJogador.classList.add("hidden");
+      esperandoPopupTroca = false;
+    }
+  </script>
+</body>
+</html>

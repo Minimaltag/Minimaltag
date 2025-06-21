@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Caça Palavras - Defesa Civil</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    /* Reset and Base Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f5f5f5;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    /* Typography */
+    h1 {
+      font-size: clamp(1.5rem, 5vw, 2rem);
+      font-weight: 700;
+      margin-bottom: 15px;
+      text-align: center;
+      color: #1a73e8;
+    }
+
+    #timer {
+      font-size: clamp(1rem, 3vw, 1.2rem);
+      font-weight: 500;
+      margin-bottom: 15px;
+      color: #555;
+    }
+
+    /* Word List */
+    #word-list {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      max-width: 90vw;
+    }
+
+    .word {
+      padding: 6px 12px;
+      font-size: clamp(0.9rem, 2.5vw, 1rem);
+      background-color: #e0e0e0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      transition: all 0.3s ease;
+    }
+
+    .word.found {
+      background-color: #a5d6a7;
+      text-decoration: line-through;
+      color: #333;
+    }
+
+    /* Grid */
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      gap: 6px;
+      width: clamp(280px, 85vw, 450px);
+      padding: 12px;
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+
+    .cell {
+      aspect-ratio: 1;
+      background-color: #f9f9f9;
+      border-radius: 8px;
+      font-size: clamp(16px, 3.5vw, 22px);
+      font-weight: 700;
+      color: #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s ease;
+      will-change: transform;
+    }
+
+    .cell:hover {
+      background-color: #e0e0e0;
+      transform: scale(1.05);
+    }
+
+    .cell.selected {
+      background-color: #ffd54f;
+      color: #000;
+      box-shadow: 0 0 8px rgba(255, 213, 79, 0.6);
+    }
+
+    .cell.found {
+      background-color: #81c784 !important;
+      color: #fff !important;
+      box-shadow: 0 0 8px rgba(129, 199, 132, 0.6);
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 10px 20px;
+      font-size: clamp(0.9rem, 2.5vw, 1rem);
+      font-weight: 500;
+      background-color: #1a73e8;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      margin: 5px;
+    }
+
+    .btn:hover {
+      background-color: #1557b0;
+    }
+
+    .btn:disabled {
+      background-color: #b0bec5;
+      cursor: not-allowed;
+    }
+
+    /* Game Over Modal */
+    #game-over {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    #game-over > div {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      max-width: 90vw;
+      width: 400px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    #game-over p {
+      font-size: clamp(1.2rem, 4vw, 1.5rem);
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    #resumo-final {
+      font-size: clamp(1rem, 3vw, 1.1rem);
+      margin-bottom: 20px;
+      color: #555;
+    }
+
+    /* Dark Mode */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #121212;
+        color: #e0e0e0;
+      }
+
+      h1 {
+        color: #8ab4f8;
+      }
+
+      #timer {
+        color: #b0bec5;
+      }
+
+      #grid {
+        background-color: #1e1e1e;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      }
+
+      .cell {
+        background-color: #2a2a2a;
+        color: #e0e0e0;
+      }
+
+      .cell:hover {
+        background-color: #3a3a3a;
+      }
+
+      .cell.selected {
+        background-color: #ffca28;
+        color: #000;
+      }
+
+      .cell.found {
+        background-color: #388e3c !important;
+        color: #fff !important;
+      }
+
+      .word {
+        background-color: #333;
+        border-color: #555;
+        color: #e0e0e0;
+      }
+
+      .word.found {
+        background-color: #2e7d32;
+      }
+
+      .btn {
+        background-color: #8ab4f8;
+        color: #000;
+      }
+
+      .btn:hover {
+        background-color: #669df6;
+      }
+
+      #game-over > div {
+        background-color: #1e1e1e;
+        color: #e0e0e0;
+      }
+
+      #resumo-final {
+        color: #b0bec5;
+      }
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 600px) {
+      #grid {
+        width: 95vw;
+        gap: 4px;
+      }
+
+      .cell {
+        font-size: clamp(14px, 4vw, 18px);
+      }
+
+      .btn {
+        padding: 8px 16px;
+        font-size: clamp(0.8rem, 2.5vw, 0.9rem);
+      }
+    }
+  </style>
+</head>
+<body>
+  <script type="module">
+    import { auth } from '../../js/firebase-config.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = "../../index.html";
+      }
+    });
+  </script>
+  <h1>Caça Palavras - Defesa Civil</h1>
+  <div id="timer">Tempo restante: <span id="tempo">03:00</span></div>
+  <div id="word-list"></div>
+  <div id="grid"></div>
+  <div>
+    <button class="btn" id="next-btn" style="display: none;">Próximo Nível</button>
+    <button class="btn" id="desistir-btn">Desistir</button>
+  </div>
+  <div id="game-over" style="display: none;">
+    <div>
+      <p>🎉 Fim de jogo! 🎉</p>
+      <div id="resumo-final"></div>
+      <button class="btn" id="restart-btn">Reiniciar</button>
+    </div>
+  </div>
+
+  <script>
+    const palavras = ["ALARME", "AJUDAR", "BARRA", "CHUVA", "FOGO", "GRUPO", "PLANO", "RAIO", "RISCO", "VENTO", "SOCORRO", "SECA", "SIRENE", "DANOS", "SALVAR", "PONTE", "CIVIL", "URGENCIA", "ALERTA", "DESLIZA"];
+    const colunas = 9, linhas = 12;
+    let nivel = parseInt(localStorage.getItem("nivel") || "1");
+    const grid = document.getElementById("grid");
+    const wordListEl = document.getElementById("word-list");
+    const nextBtn = document.getElementById("next-btn");
+    const tempoEl = document.getElementById("tempo");
+    const gameOverEl = document.getElementById("game-over");
+    const restartBtn = document.getElementById("restart-btn");
+    const desistirBtn = document.getElementById("desistir-btn");
+    const resumoFinalEl = document.getElementById("resumo-final");
+
+    let selecionadas = [], gradeAtual = [], palavrasNivel = [], palavrasEncontradas = [];
+    let timer, segundos = 180, pontosFinais = 0;
+    let totalPalavrasEncontradas = 0;
+
+    function formatarTempo(segundos) {
+      const m = Math.floor(segundos / 60).toString().padStart(2, "0");
+      const s = (segundos % 60).toString().padStart(2, "0");
+      return `${m}:${s}`;
+    }
+
+    function iniciarCronometro() {
+      clearInterval(timer);
+      tempoEl.textContent = formatarTempo(segundos);
+      timer = setInterval(() => {
+        segundos--;
+        tempoEl.textContent = formatarTempo(segundos);
+        if (segundos <= 0) {
+          clearInterval(timer);
+          exibirGameOver();
+        }
+      }, 1000);
+    }
+
+    function gerarGrade(palavrasNivel) {
+      const grade = Array.from({ length: linhas }, () => Array(colunas).fill(""));
+      for (const palavra of palavrasNivel) {
+        let colocado = false, tentativas = 0;
+        while (!colocado && tentativas < 100) {
+          tentativas++;
+          const direcoes = [[1, 0], [0, 1], [1, 1], [-1, 1]];
+          const [dx, dy] = direcoes[Math.floor(Math.random() * direcoes.length)];
+          const maxX = dx === 1 ? colunas - palavra.length : dx === -1 ? palavra.length - 1 : colunas - 1;
+          const maxY = dy === 1 ? linhas - palavra.length : linhas - 1;
+          const x = Math.floor(Math.random() * (maxX + 1));
+          const y = Math.floor(Math.random() * (maxY + 1));
+          let podeColocar = true;
+          for (let i = 0; i < palavra.length; i++) {
+            const xi = x + dx * i;
+            const yi = y + dy * i;
+            if (xi < 0 || xi >= colunas || yi < 0 || yi >= linhas || (grade[yi][xi] && grade[yi][xi] !== palavra[i])) {
+              podeColocar = false;
+              break;
+            }
+          }
+          if (podeColocar) {
+            for (let i = 0; i < palavra.length; i++) {
+              const xi = x + dx * i;
+              const yi = y + dy * i;
+              grade[yi][xi] = palavra[i];
+            }
+            colocado = true;
+          }
+        }
+      }
+      for (let y = 0; y < linhas; y++) {
+        for (let x = 0; x < colunas; x++) {
+          if (!grade[y][x]) grade[y][x] = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+        }
+      }
+      return grade;
+    }
+
+    function exibirGameOver() {
+      clearInterval(timer);
+      gameOverEl.style.display = "flex";
+      resumoFinalEl.innerHTML = `
+        <p>✅ Palavras encontradas: ${totalPalavrasEncontradas}</p>
+        <p>⭐ Pontuação final: <strong>${pontosFinais} pontos</strong></p>
+      `;
+    }
+
+    function renderizarGrade(grade) {
+      grid.innerHTML = "";
+      for (let y = 0; y < linhas; y++) {
+        for (let x = 0; x < colunas; x++) {
+          const div = document.createElement("div");
+          div.classList.add("cell");
+          div.dataset.x = x;
+          div.dataset.y = y;
+          div.textContent = grade[y][x];
+          div.addEventListener("click", () => selecionarCelula(div));
+          grid.appendChild(div);
+        }
+      }
+    }
+
+    function selecionarCelula(celula) {
+      const x = parseInt(celula.dataset.x), y = parseInt(celula.dataset.y);
+      const pos = `${x},${y}`;
+      const idx = selecionadas.indexOf(pos);
+      if (idx !== -1) {
+        selecionadas.splice(idx, 1);
+        celula.classList.remove("selected");
+        return;
+      }
+      if (selecionadas.length === 0 || vizinhoImediato(x, y, selecionadas[selecionadas.length - 1])) {
+        selecionadas.push(pos);
+        celula.classList.add("selected");
+      } else {
+        document.querySelectorAll(".cell.selected").forEach(c => c.classList.remove("selected"));
+        selecionadas = [pos];
+        celula.classList.add("selected");
+      }
+      verificarPalavra();
+    }
+
+    function vizinhoImediato(x, y, ultimaPos) {
+      const [ux, uy] = ultimaPos.split(",").map(Number);
+      return Math.abs(x - ux) <= 1 && Math.abs(y - uy) <= 1;
+    }
+
+    function verificarPalavra() {
+      const letras = selecionadas.map(p => {
+        const [x, y] = p.split(",").map(Number);
+        return gradeAtual[y][x];
+      }).join("");
+      if (palavrasNivel.includes(letras) && !palavrasEncontradas.includes(letras)) {
+        palavrasEncontradas.push(letras);
+        totalPalavrasEncontradas++;
+        for (const pos of selecionadas) {
+          const [x, y] = pos.split(",").map(Number);
+          document.querySelector(`.cell[data-x='${x}'][data-y='${y}']`).classList.add("found");
+        }
+        document.querySelectorAll(".word").forEach(w => {
+          if (w.textContent === letras) w.classList.add("found");
+        });
+        pontosFinais += letras.length * 10;
+        selecionadas = [];
+        if (palavrasEncontradas.length === palavrasNivel.length) {
+          if (nivel < 10) {
+            nextBtn.style.display = "inline-block";
+            nextBtn.onclick = () => {
+              nivel++;
+              localStorage.setItem("nivel", nivel);
+              nextBtn.style.display = "none";
+              iniciarNivel();
+            };
+          } else {
+            exibirGameOver();
+          }
+        }
+      }
+    }
+
+    function iniciarNivel() {
+      gameOverEl.style.display = "none";
+      palavrasNivel = [];
+      while (palavrasNivel.length < 5) {
+        const p = palavras[Math.floor(Math.random() * palavras.length)];
+        if (!palavrasNivel.includes(p)) palavrasNivel.push(p);
+      }
+      palavrasEncontradas = [];
+      selecionadas = [];
+      gradeAtual = gerarGrade(palavrasNivel);
+      renderizarGrade(gradeAtual);
+      wordListEl.innerHTML = palavrasNivel.map(p => `<span class="word">${p}</span>`).join("");
+      segundos = 180;
+      iniciarCronometro();
+    }
+
+    restartBtn.onclick = () => {
+      nivel = 1;
+      localStorage.setItem("nivel", nivel);
+      pontosFinais = 0;
+      totalPalavrasEncontradas = 0;
+      iniciarNivel();
+    };
+
+    desistirBtn.onclick = () => exibirGameOver();
+
+    iniciarNivel();
+  </script>
+</body>
+</html>

@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Jogo da Forca</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      text-align: center;
+      background-color: #f4f4f9;
+      color: #333;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+    }
+
+    #telaInicio, #telaJogo, #telaRanking {
+      padding: 20px;
+      max-width: 600px;
+      width: 100%;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      margin: 10px auto;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    h1, h2 {
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
+
+    button {
+      background-color: #3498db;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.1s;
+      margin: 5px;
+    }
+
+    button:hover:not(:disabled) {
+      background-color: #2980b9;
+      transform: translateY(-2px);
+    }
+
+    button:disabled {
+      background-color: #bdc3c7;
+      cursor: not-allowed;
+    }
+
+    #topBar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    #btnDesistir {
+      background-color: #ecf0f1;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    #btnDesistir:hover:not(:disabled) {
+      background-color: #dfe6e9;
+      transform: none;
+    }
+
+    #btnDesistir svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    svg.hangman {
+      width: 100%;
+      max-width: 200px;
+      height: 250px;
+      margin: 15px auto;
+      display: block;
+    }
+
+    #categoria {
+      font-size: 18px;
+      font-weight: bold;
+      color: #7f8c8d;
+      margin: 10px 0;
+    }
+
+    #wordDisplay {
+      font-size: 28px;
+      font-weight: bold;
+      letter-spacing: 5px;
+      margin: 15px 0;
+      color: #2c3e50;
+    }
+
+    #teclado {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 5px;
+      margin: 10px 0;
+    }
+
+    #teclado button {
+      width: 45px;
+      height: 45px;
+      font-size: 18px;
+      padding: 0;
+      background-color: #ecf0f1;
+      color: #333;
+    }
+
+    #teclado button:hover:not(:disabled) {
+      background-color: #dfe6e9;
+    }
+
+    #wrongLetters {
+      font-size: 16px;
+      font-weight: bold;
+      color: #e74c3c;
+      margin: 10px 0;
+    }
+
+    #message {
+      font-size: 18px;
+      color: #333;
+      margin: 15px 0;
+    }
+
+    #botoesFim button {
+      font-size: 16px;
+      padding: 10px 20px;
+    }
+
+    #inputNomeBox {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      z-index: 1000;
+      width: 90%;
+      max-width: 320px;
+      text-align: center;
+      display: none;
+    }
+
+    #inputNomeBox.visible {
+      display: block;
+    }
+
+    #inputNomeBox p {
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+
+    #inputNomeBox input {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin-bottom: 15px;
+    }
+
+    #inputNomeBox button {
+      width: 100%;
+      padding: 10px;
+    }
+
+    #overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 900;
+      display: none;
+    }
+
+    #overlay.visible {
+      display: block;
+    }
+
+    #rankingList {
+      text-align: left;
+      max-width: 300px;
+      margin: 20px auto;
+      font-size: 16px;
+      color: #333;
+    }
+
+    #rankingList p {
+      margin: 8px 0;
+      padding: 8px;
+      background: #ecf0f1;
+      border-radius: 5px;
+    }
+
+    #pontuacaoAtual, #nivel, #timer {
+      font-size: 16px;
+      color: #333;
+    }
+
+    @media (max-width: 480px) {
+      #telaInicio, #telaJogo, #telaRanking {
+        padding: 15px;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      h2 {
+        font-size: 20px;
+      }
+
+      #wordDisplay {
+        font-size: 24px;
+        letter-spacing: 3px;
+      }
+
+      #teclado button {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+      }
+
+      svg.hangman {
+        max-width: 150px;
+        height: 200px;
+      }
+
+      button {
+        font-size: 14px;
+        padding: 8px 15px;
+      }
+    }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+  <script type="module">
+    import { auth } from '../../js/firebase-config.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = "../../index.html";
+      }
+    });
+  </script>
+
+  <div id="telaInicio">
+    <h1>Jogo da Forca</h1>
+    <button onclick="mostrarRanking()" aria-label="Ver Ranking">📊 Ver Ranking</button>
+    <p>Escolha o modo de jogo:</p>
+    <button onclick="iniciarJogo('normal')">Modo Normal</button>
+    <button onclick="iniciarJogo('batalha')">Modo Batalha 🥊</button>
+  </div>
+
+  <div id="telaJogo" class="hidden">
+    <div id="topBar">
+      <button onclick="desistir()" id="btnDesistir" aria-label="Desistir">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M15 18l-6-6 6-6" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div>
+        <div id="nivel" class="hidden">Nível: 1</div>
+        <div id="timer" class="hidden">Tempo restante: 10:00</div>
+      </div>
+      <div id="pontuacaoAtual" class="hidden">🔥 0</div>
+    </div>
+
+    <div id="categoria"></div>
+    <svg class="hangman" viewBox="0 0 200 250" xmlns="http://www.w3.org/2000/svg">
+      <line x1="20" y1="230" x2="180" y2="230" stroke="#000" stroke-width="4"/>
+      <line x1="60" y1="230" x2="60" y2="20" stroke="#000" stroke-width="4"/>
+      <line x1="60" y1="20" x2="140" y2="20" stroke="#000" stroke-width="4"/>
+      <line x1="140" y1="20" x2="140" y2="50" stroke="#000" stroke-width="4"/>
+      <circle id="head" class="parte" cx="140" cy="70" r="20" stroke="#000" stroke-width="4" fill="none" style="visibility:hidden"/>
+      <line id="body" class="parte" x1="140" y1="90" x2="140" y2="150" stroke="#000" stroke-width="4" style="visibility:hidden"/>
+      <line id="armR" class="parte" x1="140" y1="100" x2="170" y2="130" stroke="#000" stroke-width="4" style="visibility:hidden"/>
+      <line id="armL" class="parte" x1="140" y1="100" x2="110" y2="130" stroke="#000" stroke-width="4" style="visibility:hidden"/>
+      <line id="legR" class="parte" x1="140" y1="150" x2="170" y2="190" stroke="#000" stroke-width="4" style="visibility:hidden"/>
+      <line id="legL" class="parte" x1="140" y1="150" x2="110" y2="190" stroke="#000" stroke-width="4" style="visibility:hidden"/>
+    </svg>
+
+    <div id="wordDisplay">_ _ _ _</div>
+    <div id="teclado"></div>
+    <div id="wrongLetters">Erradas:</div>
+    <div id="message"></div>
+
+    <div id="inputNomeBox">
+      <p>Digite seu nome para salvar no ranking:</p>
+      <input id="inputNome" placeholder="Seu nome" aria-label="Nome para o ranking" />
+      <button onclick="salvarRanking()">Salvar</button>
+    </div>
+  </div>
+
+  <div id="telaRanking" class="hidden">
+    <h2>🏆 Ranking</h2>
+    <div id="rankingList"></div>
+    <button onclick="voltarInicio()" aria-label="Voltar ao início">🔙 Voltar</button>
+  </div>
+
+  <div id="overlay"></div>
+
+  <script>
+    const firebaseConfig = {
+    apiKey: "AIzaSyC5wHhdIZlY9txtYkN88R-67lIP5FZlFpY",
+    authDomain: "mtag-1c04d.firebaseapp.com",
+    projectId: "mtag-1c04d",
+    storageBucket: "mtag-1c04d.firebasestorage.app",
+    messagingSenderId: "487741931549",
+    appId: "1:487741931549:web:cf45afe3c7b5cda7de06f4"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const bancoPalavras = {
+      "ANIMAL": ["CACHORRO", "GATO", "ELEFANTE", "LEAO", "TIGRE", "ZEBRA", "GIRAFA", "MACACO", "JACARE", "TUBARAO", "GOLFINHO", "CAVALO", "PAPAGAIO", "URSO", "VEADO", "COELHO", "CAMELO", "ANTA", "FOCA", "PINGUIM"],
+      "PAIS": ["BRASIL", "CANADA", "CHINA", "ALEMANHA", "FRANCA", "ITALIA", "JAPAO", "MEXICO", "EGITO", "RUSSIA", "INDIA", "PORTUGAL", "ESPANHA", "GRECIA", "ARGENTINA", "CHILE", "AUSTRALIA", "NORUEGA", "SUECIA", "TURQUIA"],
+      "DEFESA CIVIL": ["BOMBEIRO", "SIRENE", "RESGATE", "EMERGENCIA", "ABRIGO", "EVACUACAO", "INCENDIO", "ALAGAMENTO", "SIRENES", "CHUVA", "DESLIZAMENTO", "ALERTA", "SOCORRO", "SEGURANCA", "PREVENCAO", "DEFESA", "RISCO", "COMUNIDADE", "FOGO", "PERIGO"],
+      "NOMES": ["JOAO", "MARIA", "ANA", "PEDRO", "JULIA", "BRUNO", "PAULO", "LARA", "LUCAS", "SOPHIA", "RAFAEL", "ENZO", "CAMILA", "DANIEL", "CARLA", "GUSTAVO", "HELENA", "MARCOS", "ALINE", "THIAGO"],
+      "OBJETO": ["CADEIRA", "MESA", "GARRAFA", "CELULAR", "CADERNO", "CANETA", "OCULOS", "CONTROLE", "CARREGADOR", "TECLADO", "MOCHILA", "LAPIS", "RELOGIO", "VENTILADOR", "SOFA", "ESPELHO", "JANELA", "PORTA", "TELEFONE", "LIVRO"]
+    };
+
+    const partes = ["head", "body", "armR", "armL", "legR", "legL"];
+    const temposPorNivel = [600, 540, 480, 420, 360, 300, 240, 180, 120, 60];
+    let modo = "normal", nivel = 1, tempoRestante = 0, intervalo, ranking = 0;
+    let categoriaAtual, palavraSecreta, letrasCertas = [], letrasErradas = [], palavrasUsadas = [];
+    const tecladoDiv = document.getElementById("teclado");
+    const inputNomeBox = document.getElementById("inputNomeBox");
+    const overlay = document.getElementById("overlay");
+
+    function iniciarJogo(modoSelecionado) {
+      document.getElementById("telaInicio").classList.add("hidden");
+      document.getElementById("telaJogo").classList.remove("hidden");
+      document.getElementById("telaRanking").classList.add("hidden");
+      modo = modoSelecionado;
+      nivel = 1;
+      ranking = 0;
+      palavrasUsadas = [];
+      esconderModalNome();
+      removerBotoesFim();
+      document.getElementById("pontuacaoAtual").classList.toggle("hidden", modo !== "batalha");
+      iniciarNivel();
+    }
+
+    function iniciarNivel() {
+      letrasCertas = [];
+      letrasErradas = [];
+      document.getElementById("wrongLetters").textContent = "Erradas:";
+      document.getElementById("message").textContent = "";
+      esconderModalNome();
+      removerBotoesFim();
+      partes.forEach(id => document.getElementById(id).style.visibility = "hidden");
+
+      const categorias = Object.keys(bancoPalavras);
+      categoriaAtual = categorias[Math.floor(Math.random() * categorias.length)];
+      let palavrasDisponiveis = bancoPalavras[categoriaAtual].filter(p => !palavrasUsadas.includes(p));
+      if (palavrasDisponiveis.length === 0) {
+        palavrasUsadas = [];
+        palavrasDisponiveis = bancoPalavras[categoriaAtual];
+      }
+
+      palavraSecreta = palavrasDisponiveis[Math.floor(Math.random() * palavrasDisponiveis.length)].toUpperCase();
+      palavrasUsadas.push(palavraSecreta);
+
+      document.getElementById("categoria").textContent = "Categoria: " + categoriaAtual;
+      document.getElementById("nivel").textContent = "Nível: " + nivel;
+      document.getElementById("nivel").classList.toggle("hidden", modo !== "normal");
+      document.getElementById("timer").classList.toggle("hidden", modo !== "batalha");
+
+      atualizarDisplay();
+      gerarTeclado();
+
+      if (modo === "batalha") {
+        if (intervalo) clearInterval(intervalo);
+        tempoRestante = temposPorNivel[Math.min(nivel - 1, temposPorNivel.length - 1)];
+        atualizarTimer();
+        intervalo = setInterval(() => {
+          tempoRestante--;
+          atualizarTimer();
+          if (tempoRestante <= 0) {
+            clearInterval(intervalo);
+            fimDeJogo("⏰ Tempo esgotado!");
+          }
+        }, 1000);
+      } else {
+        if (intervalo) clearInterval(intervalo);
+      }
+    }
+
+    function atualizarTimer() {
+      const minutos = Math.floor(tempoRestante / 60);
+      const segundos = tempoRestante % 60;
+      document.getElementById("timer").textContent = `⏱ Tempo restante: ${minutos}:${segundos < 10 ? "0" : ""}${segundos}`;
+    }
+
+    function atualizarDisplay() {
+      const display = palavraSecreta.split("").map(letra => letrasCertas.includes(letra) ? letra : "_").join(" ");
+      document.getElementById("wordDisplay").textContent = display;
+    }
+
+    function gerarTeclado() {
+      tecladoDiv.innerHTML = "";
+      const letras = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      for (let l of letras) {
+        const btn = document.createElement("button");
+        btn.textContent = l;
+        btn.onclick = () => verificarLetra(l, btn);
+        tecladoDiv.appendChild(btn);
+      }
+    }
+
+    function verificarLetra(letra, btn) {
+      btn.disabled = true;
+      if (palavraSecreta.includes(letra)) {
+        letrasCertas.push(letra);
+        atualizarDisplay();
+        if (palavraSecreta.split("").every(l => letrasCertas.includes(l))) {
+          if (modo === "batalha") {
+            ranking += tempoRestante;
+            document.getElementById("pontuacaoAtual").textContent = "🔥 " + ranking;
+          }
+          nivel++;
+          if (modo === "normal" && nivel > 100) {
+            fimDeJogo("🎉 Parabéns! Você venceu todos os níveis!");
+          } else {
+            iniciarNivel();
+          }
+        }
+      } else {
+        letrasErradas.push(letra);
+        document.getElementById("wrongLetters").textContent = "Erradas: " + letrasErradas.join(" ");
+        if (letrasErradas.length <= partes.length) {
+          document.getElementById(partes[letrasErradas.length - 1]).style.visibility = "visible";
+        }
+        if (letrasErradas.length >= partes.length) {
+          fimDeJogo(`💀 Você perdeu! A palavra era: ${palavraSecreta}`);
+        }
+      }
+    }
+
+    function fimDeJogo(msg) {
+      document.getElementById("message").textContent = msg;
+      tecladoDiv.innerHTML = "";
+      if (intervalo) clearInterval(intervalo);
+      if (modo === "batalha" && ranking > 0) {
+        mostrarModalNome();
+      } else {
+        mostrarBotoesFim();
+      }
+    }
+
+    function mostrarModalNome() {
+      overlay.classList.add("visible");
+      inputNomeBox.classList.add("visible");
+    }
+
+    function esconderModalNome() {
+      overlay.classList.remove("visible");
+      inputNomeBox.classList.remove("visible");
+    }
+
+    async function salvarRanking() {
+      const nome = document.getElementById("inputNome").value.trim();
+      if (nome === "") return;
+      await db.collection("forca").add({ nome, pontos: ranking, criadoEm: Date.now() });
+      voltarInicio();
+    }
+
+    async function mostrarRanking() {
+      document.getElementById("telaInicio").classList.add("hidden");
+      document.getElementById("telaJogo").classList.add("hidden");
+      document.getElementById("telaRanking").classList.remove("hidden");
+
+      const snapshot = await db.collection("forca").orderBy("pontos", "desc").limit(10).get();
+      const list = snapshot.docs.map((doc, i) => {
+        const data = doc.data();
+        return `<p>${i + 1}. ${data.nome} - ${data.pontos} pts</p>`;
+      }).join("");
+      document.getElementById("rankingList").innerHTML = list || "<p>Nenhum registro ainda.</p>";
+    }
+
+    function voltarInicio() {
+      esconderModalNome();
+      removerBotoesFim();
+      document.getElementById("telaInicio").classList.remove("hidden");
+      document.getElementById("telaJogo").classList.add("hidden");
+      document.getElementById("telaRanking").classList.add("hidden");
+    }
+
+    function mostrarBotoesFim() {
+      const container = document.getElementById("message");
+      const div = document.createElement("div");
+      div.id = "botoesFim";
+      div.innerHTML = `
+        <button onclick="iniciarJogo(modo)">🔁 Reiniciar</button>
+        <button onclick="voltarInicio()">🔙 Menu</button>
+      `;
+      container.appendChild(div);
+    }
+
+    function removerBotoesFim() {
+      const existente = document.getElementById("botoesFim");
+      if (existente) existente.remove();
+    }
+
+    function desistir() {
+      const confirmacao = confirm("Tem certeza de que deseja desistir da rodada?");
+      if (confirmacao) {
+        if (intervalo) clearInterval(intervalo);
+        fimDeJogo("😔 Você desistiu da rodada.");
+      }
+    }
+  </script>
+</body>
+</html>
