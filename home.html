@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MTAG</title>
+  <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      min-height: 100vh;
+      font-family: 'Roboto', sans-serif;
+      background: #f4f7fc;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      user-select: none; /* Prevents text selection */
+    }
+    button, a { outline: none; }
+    .header-bg {
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    }
+    .modal {
+      position: fixed;
+      z-index: 1000;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      backdrop-filter: blur(2px);
+    }
+    .modal-content {
+      background: #fff;
+      margin: 10% auto;
+      padding: 1.5rem;
+      border-radius: 8px;
+      max-width: 500px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+    .modal-content::-webkit-scrollbar { width: 6px; }
+    .modal-content::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+    .action-button {
+      transition: all 0.2s ease;
+    }
+    .action-button:hover {
+      transform: translateY(-2px);
+      background: #2563eb;
+    }
+    footer {
+      margin-top: auto;
+      background: #1e3a8a;
+      color: white;
+      text-align: center;
+      padding: 1rem;
+    }
+    main { padding-bottom: 1rem; }
+    @media (max-width: 640px) {
+      .modal-content { margin: 15% auto; padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Firebase Auth -->  
+<script type="module">
+    import { auth } from './js/firebase-config.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        // Se não estiver logado, redireciona para login
+        window.location.href = "index.html";
+      }
+    });
+  </script>
+  <!-- Header -->
+  <header class="header-bg text-white py-6">
+    <div class="container mx-auto px-4 text-center">
+      <h1 class="text-3xl font-bold">Minimaltag</h1>
+      <p class="text-base mt-1">Essencial em cada linha de código</p>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="container mx-auto px-4 py-8 flex-grow">
+    <div class="text-center mb-8">
+      <img src="assets/logo.png" alt="Logo SEMPDEC" class="mx-auto w-24 h-24" />
+      <p class="text-lg italic text-gray-600 mt-2">"Defesa Civil, somos todos nós."</p>
+    </div>
+
+    <!-- Action Buttons -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <button class="action-button bg-blue-600 text-white py-2 px-4 rounded shadow hover:bg-blue-700" onclick="window.location.href='funcao/mural/bt.html'">Mural</button>
+      <button class="action-button bg-blue-600 text-white py-2 px-4 rounded shadow hover:bg-blue-700" onclick="bloquearCadastro()">Cadastro de Famílias</button>
+      <button class="action-button bg-blue-600 text-white py-2 px-4 rounded shadow hover:bg-blue-700" onclick="window.location.href='funcao/relatorio/acaoreac.html'">Registros de Ações</button>
+      <button class="action-button bg-blue-600 text-white py-2 px-4 rounded shadow hover:bg-blue-700" onclick="window.location.href='funcao/cadastro/fichacafa.html'">Consulta Cadastros</button>
+      <button class="action-button bg-blue-600 text-white py-2 px-4 rounded shadow hover:bg-blue-700" onclick="window.location.href='https://drive.google.com/drive/folders/1eV_9T17ZQQOVkl_e7kXZmB2XyMV8OfoJ?usp=sharing'">Documentos Oficiais</button>
+      <button class="action-button bg-blue-600 text-white py-2 px-4 rounded shadow hover:bg-blue-700" onclick="window.location.href='funcao/jg/bt.html'">Passa Tempo</button>
+    </section>
+
+    <!-- Modal -->
+    <div id="termsModal" class="modal">
+      <div class="modal-content">
+        <h2 class="text-xl font-bold text-gray-800 mb-3">Termos e Responsabilidades</h2>
+        <div class="text-gray-700 text-sm">
+          <h3 class="text-lg font-semibold mb-2">Termo de Uso - MTAG</h3>
+          <p><strong>Versão 1.0 – Junho 2025</strong></p>
+          <h4 class="font-semibold mt-3">1. Apresentação</h4>
+          <p class="mb-2">O MTAG auxilia a SEMPDEC com cadastro de famílias, relatórios, documentos na nuvem, mural, chat anônimo e mais.</p>
+          <h4 class="font-semibold mt-3">2. Acesso</h4>
+          <p class="mb-2">Restrito à equipe SEMPDEC, com permissões por perfil.</p>
+          <h4 class="font-semibold mt-3">3. Propriedade</h4>
+          <p class="mb-2">Propriedade do desenvolvedor, cedido para uso interno. Proibida reprodução ou modificação sem autorização.</p>
+          <h4 class="font-semibold mt-3">4. Licença</h4>
+          <p class="mb-2">Uso exclusivo SEMPDEC, não transferível.</p>
+          <h4 class="font-semibold mt-3">5. Manutenção</h4>
+          <p class="mb-2">Atualizações mensais pelo desenvolvedor.</p>
+          <h4 class="font-semibold mt-3">6. Garantias</h4>
+          <p class="mb-2">Fornecido "como está". Sem garantia de disponibilidade total.</p>
+          <h4 class="font-semibold mt-3">7. Privacidade</h4>
+          <p class="mb-2">Dados restritos à SEMPDEC, sem compartilhamento externo.</p>
+        </div>
+        <div class="flex justify-end gap-2 mt-4">
+          <button id="agreeBtn" class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">Compreendo</button>
+          <button id="disagreeBtn" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">Não concordo</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="col-span-full text-center text-sm text-gray-500 mt-6 bg-transparent">
+      © 2025 Desenvolvido por Darlan Cardoso | V. 3.16.6
+    </footer>
+  </main>
+
+  <!-- JavaScript -->
+  <script>
+    const modal = document.getElementById("termsModal");
+    const agreeBtn = document.getElementById("agreeBtn");
+    const disagreeBtn = document.getElementById("disagreeBtn");
+
+    agreeBtn.onclick = () => {
+      localStorage.setItem("termsAccepted", "true");
+      modal.style.display = "none";
+    };
+
+    disagreeBtn.onclick = () => {
+      alert("Você será redirecionado por não concordar com os termos.");
+      window.location.href = "index.html";
+    };
+
+    window.onclick = (e) => {
+      if (e.target === modal) modal.style.display = "none";
+    };
+
+    function bloquearCadastro() {
+      const pin = prompt("Digite o PIN de acesso:");
+      if (pin === "2023") {
+        window.location.href = "funcao/cadastro/acaocafa.html";
+      } else if (pin !== null) {
+        alert("PIN incorreto. Acesso negado.");
+      }
+    }
+    
+    window.addEventListener("DOMContentLoaded", () => {
+      const accepted = localStorage.getItem("termsAccepted");
+      if (!accepted) {
+        modal.style.display = "block";
+      }
+    });
+  </script>
+</body>
+</html>
