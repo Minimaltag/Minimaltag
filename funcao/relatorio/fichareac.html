@@ -131,7 +131,7 @@
         transition: all 0.3s ease;
       }
 
-      button:hover {
+      button:hover:not(:disabled) {
         background-color: #e65c00;
         transform: translateY(-2px);
       }
@@ -164,6 +164,19 @@
 
       button.delete-btn:hover {
         background-color: #c82333;
+      }
+
+      button.refresh-btn {
+        background-color: #28a745;
+      }
+
+      button.refresh-btn:disabled {
+        background-color: #dc3545;
+        cursor: not-allowed;
+      }
+
+      button.refresh-btn:hover:not(:disabled) {
+        background-color: #218838;
       }
 
       /* Table */
@@ -367,7 +380,7 @@
 
         #fichasTabela th,
         #fichasTabela td {
-          font-size: 0.85rem;
+          font-size:-0.85rem;
           padding: 0.5rem;
         }
 
@@ -404,6 +417,7 @@
           <button onclick="filtrarPorMes()" aria-label="Aplicar filtro por mês">Filtrar por Mês</button>
           <button onclick="gerarPDF()" aria-label="Gerar relatório em PDF">Gerar PDF</button>
           <button class="admin-btn" onclick="toggleAdminMode()" aria-label="Ativar ou desativar modo administrativo">Ativar Modo Administrativo</button>
+          <button class="refresh-btn" id="refreshBtn" onclick="atualizarDados()" aria-label="Atualizar dados do Firebase">Atualizar</button>
         </div>
         <input
           type="text"
@@ -449,12 +463,12 @@
     </main>
     <script>
       const firebaseConfig = {
-    apiKey: "AIzaSyC5wHhdIZlY9txtYkN88R-67lIP5FZlFpY",
-    authDomain: "mtag-1c04d.firebaseapp.com",
-    projectId: "mtag-1c04d",
-    storageBucket: "mtag-1c04d.firebasestorage.app",
-    messagingSenderId: "487741931549",
-    appId: "1:487741931549:web:cf45afe3c7b5cda7de06f4"
+        apiKey: "AIzaSyC5wHhdIZlY9txtYkN88R-67lIP5FZlFpY",
+        authDomain: "mtag-1c04d.firebaseapp.com",
+        projectId: "mtag-1c04d",
+        storageBucket: "mtag-1c04d.firebasestorage.app",
+        messagingSenderId: "487741931549",
+        appId: "1:487741931549:web:cf45afe3c7b5cda7de06f4"
       };
 
       firebase.initializeApp(firebaseConfig);
@@ -464,12 +478,44 @@
 
       const CACHE_KEY = 'fichas_cache';
       const CACHE_TIMESTAMP_KEY = 'fichas_cache_timestamp';
-      const CACHE_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+      const CACHE_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours for regular cache
+      const REFRESH_COOLDOWN = 8 * 60 * 60 * 1000; // 8 hours for refresh button
+      const REFRESH_TIMESTAMP_KEY = 'refresh_timestamp';
 
       function formatarDataBR(dataISO) {
         if (!dataISO) return '';
         const [ano, mes, dia] = dataISO.split("-");
         return `${dia}${mes}${ano.slice(2)}`;
+      }
+
+      function checkRefreshButtonState() {
+        const refreshBtn = document.getElementById('refreshBtn');
+        const lastRefresh = localStorage.getItem(REFRESH_TIMESTAMP_KEY);
+        const now = new Date().getTime();
+
+        if (lastRefresh && (now - parseInt(lastRefresh) < REFRESH_COOLDOWN)) {
+          refreshBtn.disabled = true;
+          refreshBtn.style.backgroundColor = '#dc3545';
+        } else {
+          refreshBtn.disabled = false;
+          refreshBtn.style.backgroundColor = '#28a745';
+        }
+      }
+
+      async function atualizarDados() {
+        const refreshBtn = document.getElementById('refreshBtn');
+        if (refreshBtn.disabled) return;
+
+        try {
+          // Clear cache and fetch fresh data
+          localStorage.removeItem(CACHE_KEY);
+          localStorage.removeItem(CACHE_TIMESTAMP_KEY);
+          localStorage.setItem(REFRESH_TIMESTAMP_KEY, new Date().getTime().toString());
+          await carregarFichas();
+          checkRefreshButtonState();
+        } catch (error) {
+          console.error('Erro ao atualizar dados:', error);
+        }
       }
 
       async function carregarFichas() {
@@ -482,6 +528,7 @@
           if (cachedData && cachedTimestamp && (now - cachedTimestamp < CACHE_EXPIRY)) {
             fichasCache = JSON.parse(cachedData);
             exibirFichas(fichasCache);
+            checkRefreshButtonState();
             return;
           }
 
@@ -495,6 +542,7 @@
           localStorage.setItem(CACHE_TIMESTAMP_KEY, now.toString());
 
           exibirFichas(fichasCache);
+          checkRefreshButtonState();
         } catch (error) {
           console.error('Erro ao carregar fichas:', error);
         }
@@ -644,7 +692,8 @@
         doc.save('relatorio_acoes.pdf');
       }
 
+      // Initialize
       carregarFichas();
     </script>
   </body>
-</html>
+  </html>
