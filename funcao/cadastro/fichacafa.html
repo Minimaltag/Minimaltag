@@ -115,6 +115,22 @@
       opacity: 0.9;
     }
 
+    /* Atualizar Button */
+    button.atualizar {
+      background-color: #28a745;
+    }
+
+    button.atualizar.disabled {
+      background-color: #dc3545;
+      cursor: not-allowed;
+    }
+
+    button.atualizar.disabled:hover {
+      transform: none;
+      box-shadow: none;
+      opacity: 1;
+    }
+
     /* Table Styling */
     #fichasContainer {
       overflow-x: auto;
@@ -371,6 +387,7 @@
         <button onclick="promptImportarBackup()">Importar Backup JSON</button>
         <button onclick="promptToggleDuplicados()">Ver Duplicados</button>
         <button onclick="promptAbrirConversor()">Abrir Conversor</button>
+        <button id="atualizarButton" class="atualizar" onclick="atualizarDados()">Atualizar</button>
       </div>
 
       <div id="duplicadosContainer">
@@ -474,6 +491,9 @@
       let fichasCache = [];
       let loading = false;
       const LOCAL_STORAGE_KEY = 'fichasCache';
+      const LAST_UPDATE_KEY = 'lastUpdateTimestamp';
+      const COOLDOWN_HOURS = 8;
+      const COOLDOWN_MS = COOLDOWN_HOURS * 60 * 60 * 1000; // 8 horas em milissegundos
       const PASSWORD = '0000';
 
       function verificarSenha(acao) {
@@ -485,6 +505,62 @@
         return true;
       }
 
+      function atualizarEstadoBotao() {
+        const atualizarButton = document.getElementById('atualizarButton');
+        const lastUpdate = localStorage.getItem(LAST_UPDATE_KEY);
+        const now = Date.now();
+
+        if (lastUpdate && now - parseInt(lastUpdate) < COOLDOWN_MS) {
+          atualizarButton.classList.add('disabled');
+          atualizarButton.disabled = true;
+        } else {
+          atualizarButton.classList.remove('disabled');
+          atualizarButton.disabled = false;
+        }
+      }
+
+      async function atualizarDados() {
+        const lastUpdate = localStorage.getItem(LAST_UPDATE_KEY);
+        const now = Date.now();
+
+        if (lastUpdate && now - parseInt(lastUpdate) < COOLDOWN_MS) {
+          alert(`Aguarde até ${new Date(parseInt(lastUpdate) + COOLDOWN_MS).toLocaleString('pt-BR')} para atualizar novamente.`);
+          return;
+        }
+
+        if (loading) return;
+        loading = true;
+        document.getElementById('loadingSpinner').style.display = 'block';
+
+        try {
+          // Limpa o cache local
+          localStorage.removeItem(LOCAL_STORAGE_KEY);
+
+          // Busca dados diretamente do Firestore
+          const query = db.collection('fichas_acaoexecutada').orderBy('liderFamilia');
+          const snapshot = await query.get();
+          fichasCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+          // Salva os dados no localStorage
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(fichasCache));
+          localStorage.setItem(LAST_UPDATE_KEY, now.toString());
+
+          document.querySelector('#fichasTabela tbody').innerHTML = '';
+          adicionarFichasNaTabela(fichasCache);
+          atualizarContador();
+          verificarDuplicados();
+          popularComunidades();
+          atualizarEstadoBotao();
+          alert("Dados atualizados com sucesso!");
+        } catch (error) {
+          console.error("Erro ao atualizar dados:", error);
+          alert("Erro ao atualizar dados: " + error.message);
+        } finally {
+          loading = false;
+          document.getElementById('loadingSpinner').style.display = 'none';
+        }
+      }
+
       async function carregarMaisFichas() {
         if (loading) return;
         loading = true;
@@ -494,14 +570,23 @@
           // Verifica se há dados no localStorage
           const cachedData = localStorage.getItem(LOCAL_STORAGE_KEY);
           if (cachedData) {
-            fichasCache = JSON.parse(cachedData);
-            document.querySelector('#fichasTabela tbody').innerHTML = '';
-            adicionarFichasNaTabela(fichasCache);
-            atualizarContador();
-            verificarDuplicados();
-            popularComunidades();
-            loading = false;
-            document.getElementById('loadingSpinner').style.display = 'none';
+            try {
+              fichasCache = JSON.parse(cachedData);
+              document.querySelector('#fichasTabela tbody').innerHTML = '';
+              adicionarFichasNaTabela(fichasCache);
+              atualizarContador();
+              verificarDuplicados();
+              popularComunidades();
+              atualizarEstadoBotao();
+            } catch (parseError) {
+              console.error("Erro ao parsear dados do localStorage:", parseError);
+              localStorage.removeItem(LOCAL_STORAGE_KEY); // Limpa cache corrompido
+              await carregarMaisFichas(); // Tenta carregar novamente
+              return;
+            } finally {
+              loading = false;
+              document.getElementById('loadingSpinner').style.display = 'none';
+            }
             return;
           }
 
@@ -512,12 +597,14 @@
 
           // Salva os dados no localStorage
           localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(fichasCache));
+          localStorage.setItem(LAST_UPDATE_KEY, Date.now().toString());
 
           document.querySelector('#fichasTabela tbody').innerHTML = '';
           adicionarFichasNaTabela(fichasCache);
           atualizarContador();
           verificarDuplicados();
           popularComunidades();
+          atualizarEstadoBotao();
         } catch (error) {
           console.error("Erro ao carregar fichas:", error);
           alert("Erro ao carregar fichas: " + error.message);
@@ -941,8 +1028,10 @@
         carregarMaisFichas();
         document.getElementById('inputBackup').addEventListener('change', importarBackup);
         document.getElementById('editForm').addEventListener('submit', salvarEdicao);
+        // Verifica o estado do botão ao carregar a página
+        atualizarEstadoBotao();
       };
     </script>
   </main>
 </body>
-</html>
+  </html>
