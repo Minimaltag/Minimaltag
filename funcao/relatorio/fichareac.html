@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Fichas Cadastradas</title>
+    <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    <style>
+      /* Global Box-Sizing */
+      * {
+        box-sizing: border-box;
+      }
+
+      /* General Body Styling */
+      body {
+        font-family: 'Inter', sans-serif;
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
+        color: #333;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      /* Header Styling */
+      header {
+        background-color: #0077cc;
+        color: white;
+        padding: 1.5rem 0;
+        width: 100%;
+        text-align: center;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        position: relative;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+      }
+
+      /* Back Button */
+      .btn-voltar {
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: white;
+        padding: 0.5rem;
+        transition: color 0.3s ease;
+      }
+
+      .btn-voltar:hover {
+        color: #ff6b00;
+      }
+
+      .btn-voltar:focus {
+        outline: 2px solid #ff6b00;
+        outline-offset: 2px;
+      }
+
+      /* Main Content Area */
+      main {
+        background-color: #ffffff;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        width: 90%;
+        max-width: 1200px;
+        margin: 1.5rem 0;
+      }
+
+      /* Fichas Section */
+      .fichas-section {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      /* Filter and Button Container */
+      .filter-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: center;
+      }
+
+      /* Inputs */
+      input[type="text"],
+      input[type="month"],
+      input[type="date"] {
+        padding: 0.75rem;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-size: 1rem;
+        width: 100%;
+        max-width: 200px;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      input[type="text"]:focus,
+      input[type="month"]:focus,
+      input[type="date"]:focus {
+        border-color: #0077cc;
+        box-shadow: 0 0 0 3px rgba(0, 119, 204, 0.2);
+        outline: 2px solid #0077cc;
+        outline-offset: 2px;
+      }
+
+      /* Buttons */
+      button {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 600;
+        background-color: #ff6b00;
+        color: white;
+        transition: all 0.3s ease;
+      }
+
+      button:hover {
+        background-color: #e65c00;
+        transform: translateY(-2px);
+      }
+
+      button:focus {
+        outline: 2px solid #e65c00;
+        outline-offset: 2px;
+      }
+
+      button.admin-btn.active {
+        background-color: #28a745;
+      }
+
+      button.admin-btn.active:hover {
+        background-color: #218838;
+      }
+
+      button.edit-btn {
+        background-color: #0077cc;
+        margin-right: 0.5rem;
+      }
+
+      button.edit-btn:hover {
+        background-color: #005f99;
+      }
+
+      button.delete-btn {
+        background-color: #dc3545;
+      }
+
+      button.delete-btn:hover {
+        background-color: #c82333;
+      }
+
+      /* Table */
+      #fichasContainer {
+        overflow-x: auto;
+        border-radius: 8px;
+        max-width: 100%;
+      }
+
+      #fichasTabela {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        table-layout: auto;
+      }
+
+      #fichasTabela caption {
+        caption-side: top;
+        font-size: 1rem;
+        font-weight: 600;
+        padding: 0.5rem;
+        color: #333;
+        text-align: left;
+      }
+
+      #fichasTabela thead {
+        background-color: #0077cc;
+        color: white;
+      }
+
+      #fichasTabela th,
+      #fichasTabela td {
+        padding: 1rem;
+        text-align: left;
+        border: 1px solid #d1d1d1;
+        vertical-align: middle;
+        min-width: 0;
+        overflow-wrap: break-word;
+      }
+
+      #fichasTabela th:first-child,
+      #fichasTabela td:first-child {
+        writing-mode: vertical-lr;
+        text-orientation: upright;
+        width: 50px;
+        padding: 0.5rem;
+        text-align: center;
+        vertical-align: middle;
+        font-weight: 700;
+      }
+
+      #fichasTabela th {
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+        letter-spacing: 0.05em;
+      }
+
+      #fichasTabela td {
+        font-size: 0.95rem;
+        color: #333;
+      }
+
+      #fichasTabela .actions {
+        display: none;
+        width: 120px;
+      }
+
+      #fichasTabela.admin-mode .actions {
+        display: table-cell;
+      }
+
+      #fichasTabela tbody tr:nth-child(even) {
+        background-color: #f8fafc;
+      }
+
+      #fichasTabela tbody tr:hover {
+        background-color: #e6f0fa;
+        transition: background-color 0.2s ease;
+      }
+
+      /* Edit Form Overlay */
+      .edit-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        overflow-x: hidden;
+      }
+
+      .edit-form {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      }
+
+      .edit-form h2 {
+        margin-top: 0;
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .edit-form label {
+        display: block;
+        margin: 0.5rem 0 0.2rem;
+        font-weight: 600;
+      }
+
+      .edit-form input,
+      .edit-form textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-size: 1rem;
+      }
+
+      .edit-form button {
+        margin-top: 1rem;
+        width: 48%;
+      }
+
+      .edit-form button[type="button"] {
+        background-color: #6c757d;
+      }
+
+      .edit-form button[type="button"]:hover {
+        background-color: #5a6268;
+      }
+
+      /* Responsive Design */
+      @media (max-width: 768px) {
+        h1 {
+          font-size: 1.8rem;
+        }
+
+        main {
+          padding: 1.5rem;
+          width: 95%;
+        }
+
+        .filter-container {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        input[type="text"],
+        input[type="month"],
+        input[type="date"] {
+          max-width: none;
+        }
+
+        button {
+          width: 100%;
+          padding: 0.75rem;
+        }
+
+        #fichasTabela th,
+        #fichasTabela td {
+          padding: 0.75rem;
+          font-size: 0.9rem;
+        }
+
+        #fichasTabela th:first-child,
+        #fichasTabela td:first-child {
+          padding: 0.5rem;
+          font-size: 0.9rem;
+        }
+
+        #fichasTabela .actions {
+          width: 100px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        h1 {
+          font-size: 1.5rem;
+        }
+
+        .btn-voltar {
+          font-size: 1.2rem;
+        }
+
+        input[type="text"],
+        input[type="month"],
+        input[type="date"] {
+          font-size: 0.9rem;
+        }
+
+        #fichasTabela th,
+        #fichasTabela td {
+          font-size: 0.85rem;
+          padding: 0.5rem;
+        }
+
+        #fichasTabela th:first-child,
+        #fichasTabela td:first-child {
+          font-size: 0.85rem;
+        }
+
+        .edit-form {
+          padding: 1rem;
+          max-width: 90%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <script type="module">
+      import { auth } from '../../js/firebase-config.js';
+      import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+      onAuthStateChanged(auth, (user) => {
+        if (!user) {
+          window.location.href = '../../index.html';
+        }
+      });
+    </script>
+    <header>
+      <h1>Ações Executadas</h1>
+    </header>
+    <main>
+      <div class="fichas-section">
+        <div class="filter-container">
+          <input type="month" id="filtroMes" aria-label="Filtrar fichas por mês" />
+          <button onclick="filtrarPorMes()" aria-label="Aplicar filtro por mês">Filtrar por Mês</button>
+          <button onclick="gerarPDF()" aria-label="Gerar relatório em PDF">Gerar PDF</button>
+          <button class="admin-btn" onclick="toggleAdminMode()" aria-label="Ativar ou desativar modo administrativo">Ativar Modo Administrativo</button>
+        </div>
+        <input
+          type="text"
+          id="buscaInput"
+          placeholder="Buscar ficha..."
+          onkeyup="filtrarTabela()"
+          aria-label="Buscar fichas por texto"
+        />
+        <div id="fichasContainer">
+          <table id="fichasTabela" role="grid" aria-describedby="tableCaption">
+            <thead>
+              <tr>
+                <th scope="col">Data</th>
+                <th scope="col">Localidade</th>
+                <th scope="col">Ação</th>
+                <th scope="col">Responsável</th>
+                <th scope="col">Observação</th>
+                <th scope="col" class="actions" aria-hidden="true">Ações</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="edit-overlay" id="editOverlay" role="dialog" aria-modal="true" aria-label="Formulário de edição de ficha">
+        <form class="edit-form" id="editForm">
+          <h2>Editar Ficha</h2>
+          <input type="hidden" id="editId" />
+          <label for="editData">Data:</label>
+          <input type="date" id="editData" required aria-label="Data da ficha" />
+          <label for="editLocalidade">Localidade:</label>
+          <input type="text" id="editLocalidade" required aria-label="Localidade da ficha" />
+          <label for="editAcao">Ação:</label>
+          <input type="text" id="editAcao" required aria-label="Ação da ficha" />
+          <label for="editResponsavel">Responsável:</label>
+          <input type="text" id="editResponsavel" placeholder="Separar por vírgulas" aria-label="Responsáveis pela ficha, separados por vírgulas" />
+          <label for="editObservacao">Observação:</label>
+          <textarea id="editObservacao" rows="4" aria-label="Observações da ficha"></textarea>
+          <button type="submit" aria-label="Salvar alterações da ficha">Salvar</button>
+          <button type="button" onclick="closeEditForm()" aria-label="Cancelar edição da ficha">Cancelar</button>
+        </form>
+      </div>
+    </main>
+    <script>
+      const firebaseConfig = {
+    apiKey: "AIzaSyC5wHhdIZlY9txtYkN88R-67lIP5FZlFpY",
+    authDomain: "mtag-1c04d.firebaseapp.com",
+    projectId: "mtag-1c04d",
+    storageBucket: "mtag-1c04d.firebasestorage.app",
+    messagingSenderId: "487741931549",
+    appId: "1:487741931549:web:cf45afe3c7b5cda7de06f4"
+      };
+
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+      let fichasCache = [];
+      let isAdminMode = false;
+
+      const CACHE_KEY = 'fichas_cache';
+      const CACHE_TIMESTAMP_KEY = 'fichas_cache_timestamp';
+      const CACHE_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+      function formatarDataBR(dataISO) {
+        if (!dataISO) return '';
+        const [ano, mes, dia] = dataISO.split("-");
+        return `${dia}${mes}${ano.slice(2)}`;
+      }
+
+      async function carregarFichas() {
+        try {
+          // Check if data exists in localStorage and is not expired
+          const cachedData = localStorage.getItem(CACHE_KEY);
+          const cachedTimestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
+          const now = new Date().getTime();
+
+          if (cachedData && cachedTimestamp && (now - cachedTimestamp < CACHE_EXPIRY)) {
+            fichasCache = JSON.parse(cachedData);
+            exibirFichas(fichasCache);
+            return;
+          }
+
+          // Fetch from Firebase if no valid cache
+          const snapshot = await db.collection('fichas').get();
+          fichasCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          fichasCache.sort((a, b) => new Date(b.data) - new Date(a.data));
+
+          // Store in localStorage
+          localStorage.setItem(CACHE_KEY, JSON.stringify(fichasCache));
+          localStorage.setItem(CACHE_TIMESTAMP_KEY, now.toString());
+
+          exibirFichas(fichasCache);
+        } catch (error) {
+          console.error('Erro ao carregar fichas:', error);
+        }
+      }
+
+      function exibirFichas(fichas) {
+        const tbody = document.querySelector('#fichasTabela tbody');
+        tbody.innerHTML = '';
+        fichas.forEach(ficha => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${formatarDataBR(ficha.data)}</td>
+            <td>${ficha.localidade}</td>
+            <td>${ficha.acao}</td>
+            <td>${(ficha.responsavel || []).join(', ')}</td>
+            <td>${ficha.observacao || '-'}</td>
+            <td class="actions" ${isAdminMode ? '' : 'aria-hidden="true"'}>
+              <button class="edit-btn" onclick="abrirEditForm('${ficha.id}')" aria-label="Editar ficha com ID ${ficha.id}">Editar</button>
+              <button class="delete-btn" onclick="excluirFicha('${ficha.id}')" aria-label="Excluir ficha com ID ${ficha.id}">Excluir</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+        updateTableVisibility();
+      }
+
+      function updateTableVisibility() {
+        const table = document.getElementById('fichasTabela');
+        const actionsCells = document.querySelectorAll('#fichasTabela .actions');
+        if (isAdminMode) {
+          table.classList.add('admin-mode');
+          actionsCells.forEach(cell => cell.removeAttribute('aria-hidden'));
+        } else {
+          table.classList.remove('admin-mode');
+          actionsCells.forEach(cell => cell.setAttribute('aria-hidden', 'true'));
+        }
+      }
+
+      function toggleAdminMode() {
+        const password = prompt('Digite a senha administrativa:');
+        if (password === '0000') {
+          isAdminMode = !isAdminMode;
+          const adminBtn = document.querySelector('.admin-btn');
+          adminBtn.textContent = isAdminMode ? 'Desativar Modo Administrativo' : 'Ativar Modo Administrativo';
+          adminBtn.classList.toggle('active', isAdminMode);
+          updateTableVisibility();
+        } else {
+          alert('Senha incorreta!');
+        }
+      }
+
+      function abrirEditForm(id) {
+        if (!isAdminMode) return;
+        const ficha = fichasCache.find(f => f.id === id);
+        if (!ficha) return;
+
+        document.getElementById('editId').value = ficha.id;
+        document.getElementById('editData').value = ficha.data;
+        document.getElementById('editLocalidade').value = ficha.localidade;
+        document.getElementById('editAcao').value = ficha.acao;
+        document.getElementById('editResponsavel').value = (ficha.responsavel || []).join(', ');
+        document.getElementById('editObservacao').value = ficha.observacao || '';
+        document.getElementById('editOverlay').style.display = 'flex';
+        document.getElementById('editData').focus();
+      }
+
+      function closeEditForm() {
+        document.getElementById('editOverlay').style.display = 'none';
+        document.getElementById('editForm').reset();
+        document.querySelector('.admin-btn').focus();
+      }
+
+      document.getElementById('editForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('editId').value;
+        const updatedFicha = {
+          data: document.getElementById('editData').value,
+          localidade: document.getElementById('editLocalidade').value,
+          acao: document.getElementById('editAcao').value,
+          responsavel: document.getElementById('editResponsavel').value.split(',').map(r => r.trim()).filter(r => r),
+          observacao: document.getElementById('editObservacao').value || null
+        };
+        try {
+          await db.collection('fichas').doc(id).update(updatedFicha);
+          fichasCache = fichasCache.map(f => f.id === id ? { id, ...updatedFicha } : f);
+          fichasCache.sort((a, b) => new Date(b.data) - new Date(a.data));
+          // Update localStorage
+          localStorage.setItem(CACHE_KEY, JSON.stringify(fichasCache));
+          localStorage.setItem(CACHE_TIMESTAMP_KEY, new Date().getTime().toString());
+          exibirFichas(fichasCache);
+          closeEditForm();
+        } catch (error) {
+          console.error('Erro ao atualizar ficha:', error);
+        }
+      };
+
+      async function excluirFicha(id) {
+        if (!isAdminMode) return;
+        if (!confirm('Confirma exclusão desta ficha?')) return;
+        try {
+          await db.collection('fichas').doc(id).delete();
+          fichasCache = fichasCache.filter(f => f.id !== id);
+          // Update localStorage
+          localStorage.setItem(CACHE_KEY, JSON.stringify(fichasCache));
+          localStorage.setItem(CACHE_TIMESTAMP_KEY, new Date().getTime().toString());
+          exibirFichas(fichasCache);
+        } catch (error) {
+          console.error('Erro ao excluir ficha:', error);
+        }
+      }
+
+      function filtrarTabela() {
+        const filtro = document.getElementById('buscaInput').value.toLowerCase();
+        document.querySelectorAll('#fichasTabela tbody tr').forEach(row => {
+          row.style.display = row.textContent.toLowerCase().includes(filtro) ? '' : 'none';
+        });
+      }
+
+      function filtrarPorMes() {
+        const valorMes = document.getElementById('filtroMes').value;
+        if (!valorMes) return exibirFichas(fichasCache);
+
+        const [ano, mes] = valorMes.split('-');
+        const filtradas = fichasCache.filter(f => {
+          const [fAno, fMes] = (f.data || '').split('-');
+          return fAno === ano && fMes === mes;
+        });
+        exibirFichas(filtradas);
+      }
+
+      function gerarPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        doc.text('Relatório de Ações', 14, 15);
+        doc.autoTable({
+          startY: 20,
+          head: [['Data', 'Localidade', 'Ação', 'Responsável', 'Observação']],
+          body: Array.from(document.querySelectorAll('#fichasTabela tbody tr')).map(tr =>
+            Array.from(tr.querySelectorAll('td')).slice(0, 5).map(td => td.innerText)
+          ),
+          styles: { fontSize: 9 },
+          headStyles: { fillColor: [0, 119, 204], textColor: [255, 255, 255] },
+          alternateRowStyles: { fillColor: [248, 250, 252] },
+        });
+
+        doc.save('relatorio_acoes.pdf');
+      }
+
+      carregarFichas();
+    </script>
+  </body>
+</html>

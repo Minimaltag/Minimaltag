@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ação Executada</title>
+    <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+    <style>
+      :root {
+        --cor-primaria: #ff7f0e; /* Laranja energético */
+        --cor-secundaria: #007bff; /* Azul vibrante */
+        --fundo-principal: #ffffff; /* Fundo branco */
+        --cinza-claro: #f0f2f5;
+        --cinza-medio: #ced4da;
+        --cinza-escuro: #495057;
+        --sombra-leve: rgba(0, 0, 0, 0.08);
+        --sombra-media: rgba(0, 0, 0, 0.15);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Poppins', sans-serif;
+        background-color: var(--fundo-principal);
+        margin: 0;
+        padding: 0;
+        line-height: 1.6;
+        color: var(--cinza-escuro);
+      }
+
+      header {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 40px 0;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        color: var(--cor-primaria);
+        font-weight: 700;
+        margin: 0;
+      }
+
+      .form-section {
+        max-width: 700px;
+        background-color: var(--fundo-principal);
+        margin: 20px auto;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px var(--sombra-media);
+        border-top: 4px solid var(--cor-primaria);
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+      }
+
+      .form-grid label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 500;
+        color: var(--cinza-escuro);
+        font-size: 0.9rem;
+      }
+
+      input,
+      select {
+        padding: 12px;
+        font-size: 1rem;
+        border-radius: 6px;
+        border: 1px solid var(--cinza-medio);
+        width: 100%;
+        background-color: #fdfdfd;
+        transition: all 0.3s ease;
+      }
+
+      input:focus,
+      select:focus {
+        border-color: var(--cor-primaria);
+        box-shadow: 0 0 0 3px rgba(255, 127, 14, 0.2);
+        outline: none;
+      }
+
+      select#responsavel {
+        appearance: none;
+        background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%3E%3Cpath%20fill%3D%22%23ff7f0e%22%20d%3D%22M208%2072l-80%2080-80-80%20-16%2016%2096%2096%2096-96z%22%2F%3E%3C%2Fsvg%3E');
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 16px;
+      }
+
+      select#responsavel:invalid {
+        color: var(--cinza-medio);
+      }
+
+      #acaoPersonalizada {
+        display: none;
+      }
+
+      .button-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 15px;
+        margin-top: 25px;
+      }
+
+      button {
+        padding: 12px 24px;
+        background-color: var(--cor-primaria);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        flex: 1;
+        box-shadow: 0 4px 12px var(--sombra-leve);
+      }
+
+      button:hover {
+        background-color: var(--cor-secundaria);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px var(--sombra-media);
+      }
+
+      @media (max-width: 768px) {
+        .form-section {
+          margin: 15px;
+          padding: 20px;
+        }
+
+        header h1 {
+          font-size: 2rem;
+        }
+
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .button-row {
+          flex-direction: column;
+          gap: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <script type="module">
+      import { auth } from '../../js/firebase-config.js';
+      import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+      onAuthStateChanged(auth, (user) => {
+        if (!user) {
+          window.location.href = "../../index.html";
+        }
+      });
+    </script>
+    <header><h1>Ação Executada</h1></header>
+
+    <main>
+      <div class="form-section">
+        <div class="form-grid">
+          <input type="date" id="data" placeholder="Selecione a data" required />
+          <input type="text" id="localidade" placeholder="Localidade" required />
+          <select id="acaoSelect" onchange="verificarAcao()" required>
+            <option value="" disabled selected>Ação Realizada</option>
+            <option>Lavagem de rua</option>
+            <option>Abastecimento de água</option>
+            <option>Desobstrução de bueiros</option>
+            <option>Vistoria em áreas de risco</option>
+            <option>Levantamento de ocorrência</option>
+            <option>Combate a incêndio</option>
+            <option>Construção de pontes</option>
+            <option>Desobstrução do rio</option>
+            <option>Auxílio a secretarias</option>
+            <option value="outros">Outros</option>
+          </select>
+          <input type="text" id="acaoPersonalizada" placeholder="Digite a ação" style="display: none;" />
+          <select id="responsavel" multiple size="8" required>
+            <option disabled hidden>Selecione os responsáveis...</option>
+            <option>Anderson</option>
+            <option>Bruno</option>
+            <option>Josue</option>
+            <option>Sadrack</option>
+            <option>Nafitalison</option>
+            <option>Elison</option>
+            <option>Herik</option>
+            <option>Silvano</option>
+          </select>
+          <input type="text" id="observacao" placeholder="Observação (opcional)" />
+        </div>
+
+        <div class="button-row">
+          <button class="btn-salvar" onclick="adicionarFicha()">Salvar</button>
+          <button class="btn-fichas" onclick="window.location.href='fichareac.html'">Registros</button>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const firebaseConfig = {
+    apiKey: "AIzaSyC5wHhdIZlY9txtYkN88R-67lIP5FZlFpY",
+    authDomain: "mtag-1c04d.firebaseapp.com",
+    projectId: "mtag-1c04d",
+    storageBucket: "mtag-1c04d.firebasestorage.app",
+    messagingSenderId: "487741931549",
+    appId: "1:487741931549:web:cf45afe3c7b5cda7de06f4"
+      };
+
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+
+      function verificarAcao() {
+        const select = document.getElementById('acaoSelect');
+        const input = document.getElementById('acaoPersonalizada');
+        input.style.display = select.value === 'outros' ? 'block' : 'none';
+      }
+
+      async function adicionarFicha() {
+        const data = document.getElementById('data').value;
+        const localidade = document.getElementById('localidade').value.trim();
+        const acaoSelect = document.getElementById('acaoSelect').value;
+        const acaoPersonalizada = document.getElementById('acaoPersonalizada').value.trim();
+        const responsaveis = Array.from(document.getElementById('responsavel').selectedOptions).map(opt => opt.value);
+        const observacao = document.getElementById('observacao').value.trim();
+        const acao = acaoSelect === 'outros' ? acaoPersonalizada : acaoSelect;
+
+        if (!data || !localidade || !acao || responsaveis.length === 0) {
+          alert('Preencha todos os campos obrigatórios!');
+          return;
+        }
+
+        try {
+          await db.collection('fichas').add({
+            data,
+            localidade,
+            acao,
+            responsavel: responsaveis,
+            observacao,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          });
+
+          alert('Ficha salva com sucesso!');
+
+          document.getElementById('data').value = '';
+          document.getElementById('localidade').value = '';
+          document.getElementById('acaoSelect').value = '';
+          document.getElementById('acaoPersonalizada').value = '';
+          document.getElementById('acaoPersonalizada').style.display = 'none';
+          document.getElementById('responsavel').selectedIndex = -1;
+          document.getElementById('observacao').value = '';
+        } catch (error) {
+          console.error('Erro ao salvar ficha:', error);
+          alert('Erro ao salvar a ficha. Tente novamente.');
+        }
+      }
+    </script>
+  </body>
+</html>
