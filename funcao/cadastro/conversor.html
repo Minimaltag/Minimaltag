@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Conversor de Planilhas para JSON (Formato de Fichas)</title>
+  <script     src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    textarea { width: 100%; height: 300px; margin-top: 20px; }
+    button { margin: 5px 0; }
+  </style>
+</head>
+<script type="module">
+    import { auth } from '../../js/firebase-config.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        // Se não estiver logado, redireciona para login
+        window.location.href = "../../index.html";
+      }
+    });
+  </script>
+<body>
+  <h1>Conversor de Planilhas Excel (.xlsx) para JSON de Fichas</h1>
+
+  <input type="file" id="input-excel" accept=".xlsx" />
+  <br>
+  <button onclick="baixarJSONBruto()">Baixar JSON Bruto</button>
+  <button onclick="baixarJSONConvertido()">Converter e Baixar JSON Formatado</button>
+
+  <textarea id="output" readonly placeholder="JSON bruto aparecerá aqui..."></textarea>
+
+  <script>
+    let jsonData = [];
+
+    document.getElementById('input-excel').addEventListener('change', function (e) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+
+        jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+        document.getElementById('output').value = JSON.stringify(jsonData, null, 2);
+        alert('Arquivo Excel carregado com sucesso.');
+      };
+      reader.readAsArrayBuffer(e.target.files[0]);
+    });
+
+    function baixarJSONBruto() {
+      if (!jsonData.length) return alert("Nenhum dado carregado!");
+      const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'dados_brutos.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function formatarData(data) {
+      if (typeof data === 'string' && data.includes('/')) {
+        const partes = data.split('/');
+        if (partes.length === 3) {
+          const dia = partes[0].padStart(2, '0');
+          const mes = partes[1].padStart(2, '0');
+          let ano = partes[2];
+          if (ano.length === 2) ano = '20' + ano;
+          else if (ano.length === 3) ano = '2' + ano;
+          return `${ano}-${mes}-${dia}`;
+        }
+      }
+      return '';
+    }
+
+    function baixarJSONConvertido() {
+      if (!jsonData.length) {
+        alert('Nenhum dado carregado!');
+        return;
+      }
+
+      const dadosConvertidos = jsonData.slice(1).map(item => ({
+        liderFamilia: item["__EMPTY"] || "",
+        cpfLider: String(item["__EMPTY_1"] || ""),
+        numeroContato: item["__EMPTY_2"] || "",
+        dataNascimentoLider: formatarData(String(item["__EMPTY_3"] || "")),
+        tituloEleitorLider: item["__EMPTY_4"] || "",
+        zonaLider: item["__EMPTY_5"] || "",
+        secaoLider: item["__EMPTY_6"] || "",
+        nomeEsposa: item["__EMPTY_7"] || "",
+        cpfEsposa: String(item["__EMPTY_8"] || ""),
+        tituloEleitorEsposa: item["__EMPTY_9"] || "",
+        zonaEsposa: item["__EMPTY_10"] || "",
+        secaoEsposa: item["__EMPTY_11"] || "",
+        filhos: item["__EMPTY_12"] || "",
+        localidade: item["__EMPTY_13"] || ""
+      }));
+
+      const blob = new Blob([JSON.stringify(dadosConvertidos, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'fichas_convertidas.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>

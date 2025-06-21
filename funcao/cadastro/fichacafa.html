@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Famílias Cadastradas</title>
+  <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    /* General Reset and Body Styling */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    /* Header Styling */
+    header {
+      background-color: #0077cc;
+      color: white;
+      padding: 1.5rem;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    /* Main Content Area */
+    main {
+      background-color: #ffffff;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      max-width: 1200px;
+      margin: 1.5rem 0;
+    }
+
+    /* Fichas Section */
+    .fichas-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    /* Filters and Controls */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    /* Contador */
+    #contador {
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #333;
+    }
+
+    /* Inputs */
+    input[type="text"],
+    select {
+      padding: 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1rem;
+      width: 100%;
+      max-width: 300px;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    input[type="text"]:focus,
+    select:focus {
+      border-color: #0077cc;
+      box-shadow: 0 0 0 3px rgba(0, 119, 204, 0.2);
+      outline: none;
+    }
+
+    /* Buttons */
+    button {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      background-color: #ff6b00;
+      color: white;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      opacity: 0.9;
+    }
+
+    /* Table Styling */
+    #fichasContainer {
+      overflow-x: auto;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    #fichasTabela {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #f9f9f9;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    #fichasTabela thead {
+      background-color: #e0e7ef;
+      color: #333;
+    }
+
+    #fichasTabela th,
+    #fichasTabela td {
+      padding: 0.75rem;
+      text-align: left;
+      border: 1px solid #ddd;
+      font-size: 0.95rem;
+    }
+
+    #fichasTabela tbody tr:nth-child(even) {
+      background-color: #f0f4f8;
+    }
+
+    #fichasTabela tbody tr:hover {
+      background-color: #e6f0fa;
+      transition: background-color 0.2s ease;
+    }
+
+    /* Action Buttons in Table */
+    #fichasTabela td button {
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+      margin-right: 0.5rem;
+    }
+
+    #fichasTabela td button.editar {
+      background-color: #0077cc;
+    }
+
+    #fichasTabela td button.excluir {
+      background-color: #dc3545;
+    }
+
+    /* Highlight Duplicates */
+    .highlight-duplicate {
+      background-color: #ffe5e5 !important;
+    }
+
+    /* Duplicates Container */
+    #duplicadosContainer {
+      display: none;
+      background: #f9f9f9;
+      padding: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin-top: 1rem;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    #duplicadosContainer h3 {
+      margin: 0 0 0.5rem;
+      color: #c0392b;
+      font-size: 1.25rem;
+    }
+
+    #listaDuplicados li {
+      padding: 0.5rem 0;
+      font-size: 0.95rem;
+    }
+
+    /* Loading Spinner */
+    #loadingSpinner {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #e74c3c;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    /* Modal Styling */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background-color: #fff;
+      padding: 2rem;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-content h2 {
+      margin-bottom: 1rem;
+      font-size: 1.5rem;
+      color: #333;
+    }
+
+    .modal-content label {
+      display: block;
+      margin: 0.5rem 0 0.2rem;
+      font-weight: 600;
+    }
+
+    .modal-content input,
+    .modal-content textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .modal-content button {
+      margin-right: 1rem;
+    }
+
+    .modal-content button.cancelar {
+      background-color: #6c757d;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 1.75rem;
+      }
+
+      main {
+        padding: 1rem;
+        width: 95%;
+      }
+
+      .controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      button {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.9rem;
+        width: 100%;
+      }
+
+      input[type="text"],
+      select {
+        padding: 0.6rem;
+        font-size: 0.9rem;
+      }
+
+      #fichasTabela th,
+      #fichasTabela td {
+        padding: 0.5rem;
+        font-size: 0.85rem;
+      }
+
+      .modal-content {
+        padding: 1rem;
+        width: 95%;
+      }
+    }
+
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      main {
+        padding: 0.75rem;
+      }
+
+      button {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+      }
+
+      input[type="text"],
+      select {
+        padding: 0.5rem;
+        font-size: 0.8rem;
+      }
+
+      #fichasTabela th,
+      #fichasTabela td {
+        padding: 0.4rem;
+        font-size: 0.75rem;
+      }
+
+      .modal-content {
+        padding: 0.75rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <script type="module">
+    import { auth } from '../../js/firebase-config.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = "../../index.html";
+      }
+    });
+  </script>
+  <div id="loadingSpinner"></div>
+  <header>
+    <h1>Famílias Cadastradas</h1>
+  </header>
+  <main>
+    <div class="fichas-section">
+      <div class="controls">
+        <span id="contador">Total de fichas: 0</span>
+        <select id="comunidadeSelect">
+          <option value="todas">Todas as Comunidades</option>
+        </select>
+        <button onclick="promptGerarPDF()">Gerar PDF</button>
+        <button onclick="promptGerarReciboPDF()">Gerar Recibo PDF</button>
+        <input type="file" id="inputBackup" accept=".json" style="display: none;" />
+        <button onclick="promptImportarBackup()">Importar Backup JSON</button>
+        <button onclick="promptToggleDuplicados()">Ver Duplicados</button>
+        <button onclick="promptAbrirConversor()">Abrir Conversor</button>
+      </div>
+
+      <div id="duplicadosContainer">
+        <h3>Lista de Duplicados</h3>
+        <ul id="listaDuplicados"></ul>
+      </div>
+
+      <input type="text" id="buscaInput" placeholder="Buscar ficha..." onkeyup="filtrarTabela()" />
+      <div id="fichasContainer">
+        <table id="fichasTabela">
+          <thead>
+            <tr>
+              <th>Líder de Família</th>
+              <th>CPF do Líder</th>
+              <th>Telefone de Contato</th>
+              <th>Data de Nascimento do Líder</th>
+              <th>Título de Eleitor do Líder</th>
+              <th>Zona do Líder</th>
+              <th>Seção do Líder</th>
+              <th>Nome do(a) Cônjuge</th>
+              <th>CPF do(a) Cônjuge</th>
+              <th>Título de Eleitor do(a) Cônjuge</th>
+              <th>Zona do(a) Cônjuge</th>
+              <th>Seção do(a) Cônjuge</th>
+              <th>Filhos</th>
+              <th>Localidade</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Modal para Edição -->
+    <div id="editModal" class="modal">
+      <div class="modal-content">
+        <h2>Editar Ficha</h2>
+        <form id="editForm">
+          <label for="editLiderFamilia">Líder de Família</label>
+          <input type="text" id="editLiderFamilia" name="liderFamilia" />
+          
+          <label for="editCpfLider">CPF do Líder</label>
+          <input type="text" id="editCpfLider" name="cpfLider" />
+          
+          <label for="editNumeroContato">Telefone de Contato</label>
+          <input type="text" id="editNumeroContato" name="numeroContato" />
+          
+          <label for="editDataNascimentoLider">Data de Nascimento do Líder</label>
+          <input type="text" id="editDataNascimentoLider" name="dataNascimentoLider" placeholder="DD/MM/AAAA" />
+          
+          <label for="editTituloEleitorLider">Título de Eleitor do Líder</label>
+          <input type="text" id="editTituloEleitorLider" name="tituloEleitorLider" />
+          
+          <label for="editZonaLider">Zona do Líder</label>
+          <input type="text" id="editZonaLider" name="zonaLider" />
+          
+          <label for="editSecaoLider">Seção do Líder</label>
+          <input type="text" id="editSecaoLider" name="secaoLider" />
+          
+          <label for="editNomeEsposa">Nome do(a) Cônjuge</label>
+          <input type="text" id="editNomeEsposa" name="nomeEsposa" />
+          
+          <label for="editCpfEsposa">CPF do(a) Cônjuge</label>
+          <input type="text" id="editCpfEsposa" name="cpfEsposa" />
+          
+          <label for="editTituloEleitorEsposa">Título de Eleitor do(a) Cônjuge</label>
+          <input type="text" id="editTituloEleitorEsposa" name="tituloEleitorEsposa" />
+          
+          <label for="editZonaEsposa">Zona do(a) Cônjuge</label>
+          <input type="text" id="editZonaEsposa" name="zonaEsposa" />
+          
+          <label for="editSecaoEsposa">Seção do(a) Cônjuge</label>
+          <input type="text" id="editSecaoEsposa" name="secaoEsposa" />
+          
+          <label for="editFilhos">Filhos</label>
+          <textarea id="editFilhos" name="filhos"></textarea>
+          
+          <label for="editLocalidade">Localidade</label>
+          <input type="text" id="editLocalidade" name="localidade" />
+          
+          <input type="hidden" id="editId" name="id" />
+          <button type="submit">Salvar</button>
+          <button type="button" class="cancelar" onclick="fecharModal()">Cancelar</button>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyC5wHhdIZlY9txtYkN88R-67lIP5FZlFpY",
+        authDomain: "mtag-1c04d.firebaseapp.com",
+        projectId: "mtag-1c04d",
+        storageBucket: "mtag-1c04d.firebasestorage.app",
+        messagingSenderId: "487741931549",
+        appId: "1:487741931549:web:cf45afe3c7b5cda7de06f4"
+      };
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+
+      let fichasCache = [];
+      let loading = false;
+      const LOCAL_STORAGE_KEY = 'fichasCache';
+      const PASSWORD = '0000';
+
+      function verificarSenha(acao) {
+        const senha = prompt("Digite a senha para continuar:");
+        if (senha !== PASSWORD) {
+          alert("Senha incorreta.");
+          return false;
+        }
+        return true;
+      }
+
+      async function carregarMaisFichas() {
+        if (loading) return;
+        loading = true;
+        document.getElementById('loadingSpinner').style.display = 'block';
+
+        try {
+          // Verifica se há dados no localStorage
+          const cachedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+          if (cachedData) {
+            fichasCache = JSON.parse(cachedData);
+            document.querySelector('#fichasTabela tbody').innerHTML = '';
+            adicionarFichasNaTabela(fichasCache);
+            atualizarContador();
+            verificarDuplicados();
+            popularComunidades();
+            loading = false;
+            document.getElementById('loadingSpinner').style.display = 'none';
+            return;
+          }
+
+          // Se não há dados no localStorage, busca no Firestore
+          const query = db.collection('fichas_acaoexecutada').orderBy('liderFamilia');
+          const snapshot = await query.get();
+          fichasCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+          // Salva os dados no localStorage
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(fichasCache));
+
+          document.querySelector('#fichasTabela tbody').innerHTML = '';
+          adicionarFichasNaTabela(fichasCache);
+          atualizarContador();
+          verificarDuplicados();
+          popularComunidades();
+        } catch (error) {
+          console.error("Erro ao carregar fichas:", error);
+          alert("Erro ao carregar fichas: " + error.message);
+        } finally {
+          loading = false;
+          document.getElementById('loadingSpinner').style.display = 'none';
+        }
+      }
+
+      function adicionarFichasNaTabela(fichas) {
+        const tbody = document.querySelector('#fichasTabela tbody');
+        tbody.innerHTML = '';
+        fichas.forEach(f => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${f.liderFamilia || '-'}</td>
+            <td>${f.cpfLider || '-'}</td>
+            <td>${f.numeroContato || '-'}</td>
+            <td>${formatarDataBR(f.dataNascimentoLider || '')}</td>
+            <td>${f.tituloEleitorLider || '-'}</td>
+            <td>${f.zonaLider || '-'}</td>
+            <td>${f.secaoLider || '-'}</td>
+            <td>${f.nomeEsposa || '-'}</td>
+            <td>${f.cpfEsposa || '-'}</td>
+            <td>${f.tituloEleitorEsposa || '-'}</td>
+            <td>${f.zonaEsposa || '-'}</td>
+            <td>${f.secaoEsposa || '-'}</td>
+            <td>${f.filhos || '-'}</td>
+            <td>${f.localidade || '-'}</td>
+            <td>
+              <button class="editar" onclick="promptAbrirModalEditar('${f.id}')">Editar</button>
+              <button class="excluir" onclick="promptExcluirFicha('${f.id}')">Excluir</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      function atualizarContador() {
+        document.getElementById('contador').innerText = `Total de fichas: ${fichasCache.length}`;
+      }
+
+      function formatarDataBR(data) {
+        if (!data) return '';
+        if (data.includes('-')) {
+          const [ano, mes, dia] = data.split('-');
+          return `${dia}/${mes}/${ano}`;
+        }
+        if (data.includes('/')) return data;
+        return data;
+      }
+
+      function verificarDuplicados() {
+        const duplicados = {};
+        fichasCache.forEach(f => {
+          const chaves = [
+            f.liderFamilia?.trim().toLowerCase(),
+            f.nomeEsposa?.trim().toLowerCase(),
+            f.cpfLider?.trim(),
+            f.cpfEsposa?.trim()
+          ];
+          chaves.forEach(c => {
+            if (!c) return;
+            duplicados[c] = duplicados[c] || [];
+            duplicados[c].push(f);
+          });
+        });
+
+        const duplicadosFiltrados = Object.entries(duplicados).filter(([_, v]) => v.length > 1);
+        const duplicadosSet = new Set(duplicadosFiltrados.flatMap(([_, fichas]) => fichas.map(f => f.id)));
+        document.querySelectorAll('#fichasTabela tbody tr').forEach((tr, i) => {
+          if (duplicadosSet.has(fichasCache[i]?.id)) {
+            tr.classList.add('highlight-duplicate');
+          }
+        });
+
+        const lista = document.getElementById('listaDuplicados');
+        lista.innerHTML = '';
+        duplicadosFiltrados.forEach(([chave, fichas]) => {
+          const li = document.createElement('li');
+          const comunidades = [...new Set(fichas.map(f => f.localidade || '-'))];
+          li.textContent = `${chave} - Comunidades: ${comunidades.join(', ')}`;
+          lista.appendChild(li);
+        });
+      }
+
+      function toggleDuplicados() {
+        const container = document.getElementById('duplicadosContainer');
+        container.style.display = container.style.display === 'none' ? 'block' : 'none';
+      }
+
+      function promptToggleDuplicados() {
+        if (verificarSenha()) {
+          toggleDuplicados();
+        }
+      }
+
+      async function excluirFicha(id) {
+        try {
+          await db.collection('fichas_acaoexecutada').doc(id).delete();
+          fichasCache = fichasCache.filter(f => f.id !== id);
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(fichasCache));
+          await carregarMaisFichas();
+        } catch (error) {
+          console.error("Erro ao excluir ficha:", error);
+          alert("Erro ao excluir ficha: " + error.message);
+        }
+      }
+
+      function promptExcluirFicha(id) {
+        if (verificarSenha()) {
+          excluirFicha(id);
+        }
+      }
+
+      function filtrarTabela() {
+        const filtro = document.getElementById('buscaInput').value.toLowerCase();
+        document.querySelectorAll('#fichasTabela tbody tr').forEach(row => {
+          row.style.display = row.textContent.toLowerCase().includes(filtro) ? '' : 'none';
+        });
+      }
+
+      async function importarBackup(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        try {
+          document.getElementById('loadingSpinner').style.display = 'block';
+          const reader = new FileReader();
+          reader.onload = async function (e) {
+            try {
+              const data = JSON.parse(e.target.result);
+              if (!Array.isArray(data)) throw new Error("Formato de arquivo inválido.");
+
+              for (const ficha of data) {
+                await db.collection('fichas_acaoexecutada').add(ficha);
+              }
+
+              // Limpa o localStorage e recarrega os dados
+              localStorage.removeItem(LOCAL_STORAGE_KEY);
+              await carregarMaisFichas();
+              alert("Backup importado com sucesso!");
+            } catch (error) {
+              alert("Erro ao importar: " + error.message);
+            } finally {
+              document.getElementById('loadingSpinner').style.display = 'none';
+              document.getElementById('inputBackup').value = '';
+            }
+          };
+          reader.readAsText(file);
+        } catch (error) {
+          alert("Erro: " + error.message);
+        }
+      }
+
+      function promptImportarBackup() {
+        if (verificarSenha()) {
+          document.getElementById('inputBackup').click();
+        }
+      }
+
+      function abrirModalEditar(id) {
+        const ficha = fichasCache.find(f => f.id === id);
+        if (!ficha) return alert("Ficha não encontrada.");
+
+        document.getElementById('editId').value = ficha.id;
+        document.getElementById('editLiderFamilia').value = ficha.liderFamilia || '';
+        document.getElementById('editCpfLider').value = ficha.cpfLider || '';
+        document.getElementById('editNumeroContato').value = ficha.numeroContato || '';
+        document.getElementById('editDataNascimentoLider').value = formatarDataBR(ficha.dataNascimentoLider || '');
+        document.getElementById('editTituloEleitorLider').value = ficha.tituloEleitorLider || '';
+        document.getElementById('editZonaLider').value = ficha.zonaLider || '';
+        document.getElementById('editSecaoLider').value = ficha.secaoLider || '';
+        document.getElementById('editNomeEsposa').value = ficha.nomeEsposa || '';
+        document.getElementById('editCpfEsposa').value = ficha.cpfEsposa || '';
+        document.getElementById('editTituloEleitorEsposa').value = ficha.tituloEleitorEsposa || '';
+        document.getElementById('editZonaEsposa').value = ficha.zonaEsposa || '';
+        document.getElementById('editSecaoEsposa').value = ficha.secaoEsposa || '';
+        document.getElementById('editFilhos').value = ficha.filhos || '';
+        document.getElementById('editLocalidade').value = ficha.localidade || '';
+
+        document.getElementById('editModal').style.display = 'flex';
+      }
+
+      function promptAbrirModalEditar(id) {
+        if (verificarSenha()) {
+          abrirModalEditar(id);
+        }
+      }
+
+      function fecharModal() {
+        document.getElementById('editModal').style.display = 'none';
+        document.getElementById('editForm').reset();
+      }
+
+      async function salvarEdicao(event) {
+        event.preventDefault();
+        if (!verificarSenha()) return;
+
+        const id = document.getElementById('editId').value;
+        const updatedData = {
+          liderFamilia: document.getElementById('editLiderFamilia').value || null,
+          cpfLider: document.getElementById('editCpfLider').value || null,
+          numeroContato: document.getElementById('editNumeroContato').value || null,
+          dataNascimentoLider: document.getElementById('editDataNascimentoLider').value || null,
+          tituloEleitorLider: document.getElementById('editTituloEleitorLider').value || null,
+          zonaLider: document.getElementById('editZonaLider').value || null,
+          secaoLider: document.getElementById('editSecaoLider').value || null,
+          nomeEsposa: document.getElementById('editNomeEsposa').value || null,
+          cpfEsposa: document.getElementById('editCpfEsposa').value || null,
+          tituloEleitorEsposa: document.getElementById('editTituloEleitorEsposa').value || null,
+          zonaEsposa: document.getElementById('editZonaEsposa').value || null,
+          secaoEsposa: document.getElementById('editSecaoEsposa').value || null,
+          filhos: document.getElementById('editFilhos').value || null,
+          localidade: document.getElementById('editLocalidade').value || null
+        };
+
+        try {
+          document.getElementById('loadingSpinner').style.display = 'block';
+          await db.collection('fichas_acaoexecutada').doc(id).update(updatedData);
+          const index = fichasCache.findIndex(f => f.id === id);
+          if (index !== -1) {
+            fichasCache[index] = { id, ...updatedData };
+          }
+          // Atualiza o localStorage
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(fichasCache));
+          await carregarMaisFichas();
+          fecharModal();
+          alert("Ficha atualizada com sucesso!");
+        } catch (error) {
+          console.error("Erro ao atualizar ficha:", error);
+          alert("Erro ao atualizar ficha: " + error.message);
+        } finally {
+          document.getElementById('loadingSpinner').style.display = 'none';
+        }
+      }
+
+      function gerarPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: "landscape" });
+        const dataAtual = new Date().toLocaleDateString('pt-BR');
+        const comunidadeSelecionada = document.getElementById('comunidadeSelect').value;
+
+        const headers = [
+          'Líder', 'CPF Líder', 'Contato', 'Nascimento',
+          'Título', 'Zona', 'Seção', 'Cônjuge',
+          'CPF Cônjuge', 'Título Cônj.', 'Zona Cônj.',
+          'Seção Cônj.', 'Filhos', 'Localidade'
+        ];
+
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const margin = 10;
+        const availableWidth = pageWidth - 2 * margin;
+        const columnWidth = availableWidth / headers.length;
+
+        const tableData = fichasCache
+          .filter(f => comunidadeSelecionada === "todas" || f.localidade === comunidadeSelecionada)
+          .map(f => [
+            f.liderFamilia || '-', f.cpfLider || '-', f.numeroContato || '-', formatarDataBR(f.dataNascimentoLider || ''),
+            f.tituloEleitorLider || '-', f.zonaLider || '-', f.secaoLider || '-', f.nomeEsposa || '-',
+            f.cpfEsposa || '-', f.tituloEleitorEsposa || '-', f.zonaEsposa || '-', f.secaoEsposa || '-',
+            f.filhos || '-', f.localidade || '-'
+          ]);
+
+        const titulo = `Cadastros - ${comunidadeSelecionada === 'todas' ? 'Todas as Comunidades' : comunidadeSelecionada}`;
+        doc.setFontSize(14);
+        doc.text(titulo, pageWidth / 2, 15, { align: "center" });
+
+        doc.autoTable({
+          startY: 25,
+          head: [headers],
+          body: tableData,
+          margin: { top: 25, left: margin, right: margin },
+          styles: {
+            fontSize: 6,
+            cellPadding: 2,
+            overflow: 'linebreak',
+            lineHeight: 1.2,
+            halign: 'center',
+            valign: 'middle'
+          },
+          columnStyles: headers.reduce((acc, _, index) => {
+            acc[index] = { cellWidth: columnWidth };
+            return acc;
+          }, {}),
+          didDrawPage: function (data) {
+            doc.setFontSize(8);
+            const pageStr = `Página ${data.pageNumber}`;
+            doc.text(pageStr, data.settings.margin.left, doc.internal.pageSize.getHeight() - 5);
+            doc.text(`Emitido em: ${dataAtual}`, doc.internal.pageSize.getWidth() - 40, doc.internal.pageSize.getHeight() - 5);
+          }
+        });
+
+        doc.save(`cadastros_${comunidadeSelecionada}.pdf`);
+      }
+
+      function promptGerarPDF() {
+        if (verificarSenha()) {
+          gerarPDF();
+        }
+      }
+
+      function gerarReciboPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        const dataAtual = new Date().toLocaleDateString('pt-BR');
+        const comunidadeSelecionada = document.getElementById('comunidadeSelect').value;
+
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const halfPageHeight = pageHeight / 2;
+        const margin = 10;
+        const maxWidth = doc.internal.pageSize.getWidth() - 2 * margin;
+
+        const familias = fichasCache.filter(f => comunidadeSelecionada === "todas" || f.localidade === comunidadeSelecionada);
+
+        let yOffset = margin;
+        let receiptCount = 0;
+        let pageNumber = 1;
+
+        familias.forEach((familia, index) => {
+          if (receiptCount === 2 && index < familias.length) {
+            doc.addPage();
+            yOffset = margin;
+            receiptCount = 0;
+            pageNumber++;
+          }
+
+          doc.setFontSize(12);
+          doc.setFont("helvetica", "bold");
+          doc.text('RECIBO DE ENTREGA DE RANCHO', doc.internal.pageSize.getWidth() / 2, yOffset, { align: 'center' });
+          yOffset += 10;
+
+          doc.setFontSize(10);
+          doc.setFont("helvetica", "normal");
+          const declarationText = `Eu, ${familia.liderFamilia || '____________________'}, inscrito(a) no CPF sob o nº ${familia.cpfLider || '____________________'}, residente na localidade de ${familia.localidade || '____________________'}, declaro, para os devidos fins, que recebi da Secretaria Municipal de Proteção e Defesa Civil (SEMPDEC), na data de ${dataAtual}, a quantidade de _____ rancho(s) de alimentos.`;
+          const splitDeclaration = doc.splitTextToSize(declarationText, maxWidth);
+          doc.text(splitDeclaration, margin, yOffset);
+          yOffset += splitDeclaration.length * 5 + 5;
+
+          doc.setFontSize(10);
+          doc.setFont("helvetica", "bold");
+          doc.text('Informações adicionais:', margin, yOffset);
+          yOffset += 5;
+
+          doc.setFont("helvetica", "normal");
+          const additionalInfo = [
+            `Cônjuge: ${familia.nomeEsposa || '____________________'} — CPF: ${familia.cpfEsposa || '____________________'}`,
+            `Contato: ${familia.numeroContato || '____________________'}`,
+            `Recebido por (se diferente do titular): ______________________________`
+          ];
+          additionalInfo.forEach(line => {
+            const splitLine = doc.splitTextToSize(line, maxWidth);
+            doc.text(splitLine, margin, yOffset);
+            yOffset += splitLine.length * 5 + 2;
+          });
+          yOffset += 5;
+
+          const confirmationText = 'Declaro que os gêneros alimentícios foram entregues em perfeitas condições e destinam-se exclusivamente ao consumo familiar.';
+          const splitConfirmation = doc.splitTextToSize(confirmationText, maxWidth);
+          doc.text(splitConfirmation, margin, yOffset);
+          yOffset += splitConfirmation.length * 5 + 10;
+
+          doc.setLineWidth(0.5);
+          doc.setDrawColor(0);
+          doc.line(margin, yOffset, doc.internal.pageSize.getWidth() - margin, yOffset);
+          yOffset += 5;
+
+          doc.setFontSize(10);
+          doc.text(`Data de Emissão: ${dataAtual}`, margin, yOffset);
+          yOffset += 5;
+          doc.text('Funcionário Responsável pela Entrega: ______________________________', margin, yOffset);
+          yOffset += 5;
+          doc.text('Assinatura do Beneficiário ou Representante: ______________________________', margin, yOffset);
+          yOffset += 10;
+
+          if (receiptCount === 0 && index < familias.length - 1) {
+            doc.setDrawColor(150);
+            doc.line(margin, halfPageHeight, doc.internal.pageSize.getWidth() - margin, halfPageHeight);
+            yOffset = halfPageHeight + margin;
+          }
+
+          receiptCount++;
+
+          doc.setFontSize(8);
+          doc.text(`Página ${pageNumber}`, margin, pageHeight - 5);
+          doc.text(`Emitido em: ${dataAtual}`, doc.internal.pageSize.getWidth() - 40, pageHeight - 5);
+        });
+
+        doc.save(`recibos_rancho_${comunidadeSelecionada}.pdf`);
+      }
+
+      function promptGerarReciboPDF() {
+        if (verificarSenha()) {
+          gerarReciboPDF();
+        }
+      }
+
+      function abrirConversor() {
+        window.open("conversor.html", "_blank");
+      }
+
+      function promptAbrirConversor() {
+        if (verificarSenha()) {
+          abrirConversor();
+        }
+      }
+
+      function popularComunidades() {
+        const select = document.getElementById('comunidadeSelect');
+        const comunidades = [...new Set(fichasCache.map(f => f.localidade).filter(Boolean))];
+        select.innerHTML = `<option value="todas">Todas as Comunidades</option>`;
+        comunidades.sort().forEach(com => {
+          const opt = document.createElement('option');
+          opt.value = com;
+          opt.textContent = com;
+          select.appendChild(opt);
+        });
+      }
+
+      window.onload = function () {
+        carregarMaisFichas();
+        document.getElementById('inputBackup').addEventListener('change', importarBackup);
+        document.getElementById('editForm').addEventListener('submit', salvarEdicao);
+      };
+    </script>
+  </main>
+</body>
+</html>
