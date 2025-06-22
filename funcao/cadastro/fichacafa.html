@@ -96,6 +96,13 @@
       outline: none;
     }
 
+    /* Search Container */
+    .search-container {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
     /* Buttons */
     button {
       padding: 0.75rem 1.5rem;
@@ -113,6 +120,11 @@
       transform: translateY(-2px);
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
       opacity: 0.9;
+    }
+
+    /* Clear Search Button */
+    button.clear-search {
+      background-color: #6c757d;
     }
 
     /* Atualizar Button */
@@ -136,6 +148,7 @@
       overflow-x: auto;
       border-radius: 8px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      display: none; /* Initially hidden */
     }
 
     #fichasTabela {
@@ -395,7 +408,11 @@
         <ul id="listaDuplicados"></ul>
       </div>
 
-      <input type="text" id="buscaInput" placeholder="Buscar ficha..." onkeyup="filtrarTabela()" />
+      <div class="search-container">
+        <input type="text" id="buscaInput" placeholder="Buscar ficha (mínimo 4 caracteres)..." onkeyup="filtrarTabela()" />
+        <button class="clear-search" onclick="limparBusca()">Limpar</button>
+      </div>
+      
       <div id="fichasContainer">
         <table id="fichasTabela">
           <thead>
@@ -722,8 +739,27 @@
 
       function filtrarTabela() {
         const filtro = document.getElementById('buscaInput').value.toLowerCase();
+        const fichasContainer = document.getElementById('fichasContainer');
+
+        if (filtro.length < 4) {
+          fichasContainer.style.display = 'none';
+          document.querySelectorAll('#fichasTabela tbody tr').forEach(row => {
+            row.style.display = 'none';
+          });
+          return;
+        }
+
+        fichasContainer.style.display = 'block';
         document.querySelectorAll('#fichasTabela tbody tr').forEach(row => {
           row.style.display = row.textContent.toLowerCase().includes(filtro) ? '' : 'none';
+        });
+      }
+
+      function limparBusca() {
+        document.getElementById('buscaInput').value = '';
+        document.getElementById('fichasContainer').style.display = 'none';
+        document.querySelectorAll('#fichasTabela tbody tr').forEach(row => {
+          row.style.display = 'none';
         });
       }
 
@@ -1034,4 +1070,4 @@
     </script>
   </main>
 </body>
-  </html>
+    </html>
