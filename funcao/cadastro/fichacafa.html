@@ -9,6 +9,8 @@
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+  <!-- Adicionando ícones do Font Awesome para lupa e vassourinha -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <style>
     /* General Reset and Body Styling */
     * {
@@ -103,6 +105,31 @@
       align-items: center;
     }
 
+    /* Minimalist Buttons for Search and Clear */
+    .search-btn, .clear-search {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      background-color: #0077cc;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .clear-search {
+      background-color: #6c757d;
+    }
+
+    .search-btn:hover, .clear-search:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      opacity: 0.9;
+    }
+
     /* Buttons */
     button {
       padding: 0.75rem 1.5rem;
@@ -120,11 +147,6 @@
       transform: translateY(-2px);
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
       opacity: 0.9;
-    }
-
-    /* Clear Search Button */
-    button.clear-search {
-      background-color: #6c757d;
     }
 
     /* Atualizar Button */
@@ -328,6 +350,11 @@
         font-size: 0.9rem;
       }
 
+      .search-btn, .clear-search {
+        width: 35px;
+        height: 35px;
+      }
+
       #fichasTabela th,
       #fichasTabela td {
         padding: 0.5rem;
@@ -358,6 +385,11 @@
       select {
         padding: 0.5rem;
         font-size: 0.8rem;
+      }
+
+      .search-btn, .clear-search {
+        width: 30px;
+        height: 30px;
       }
 
       #fichasTabela th,
@@ -409,8 +441,9 @@
       </div>
 
       <div class="search-container">
-        <input type="text" id="buscaInput" placeholder="Buscar ficha (mínimo 4 caracteres)..." onkeyup="filtrarTabela()" />
-        <button class="clear-search" onclick="limparBusca()">Limpar</button>
+        <input type="text" id="buscaInput" placeholder="Buscar ficha (mínimo 4 caracteres)..." onkeyup="if(event.key === 'Enter') { buscarFicha(); }" />
+        <button class="search-btn" onclick="buscarFicha()" title="Buscar"><i class="fas fa-search"></i></button>
+        <button class="clear-search" onclick="limparBusca()" title="Limpar"><i class="fas fa-broom"></i></button>
       </div>
       
       <div id="fichasContainer">
@@ -755,12 +788,20 @@
         });
       }
 
+      function buscarFicha() {
+        filtrarTabela();
+        // Minimiza o teclado em dispositivos móveis
+        document.getElementById('buscaInput').blur();
+      }
+
       function limparBusca() {
         document.getElementById('buscaInput').value = '';
         document.getElementById('fichasContainer').style.display = 'none';
         document.querySelectorAll('#fichasTabela tbody tr').forEach(row => {
           row.style.display = 'none';
         });
+        // Minimiza o teclado em dispositivos móveis
+        document.getElementById('buscaInput').blur();
       }
 
       async function importarBackup(event) {
@@ -1070,4 +1111,4 @@
     </script>
   </main>
 </body>
-    </html>
+  </html>
