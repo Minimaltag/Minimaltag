@@ -9,7 +9,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
-  <!-- Adicionando ícones do Font Awesome para lupa e vassourinha -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <style>
     /* General Reset and Body Styling */
@@ -67,9 +66,9 @@
     .controls {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.75rem;
+      gap: 1rem; /* Aumentado para melhor espaçamento */
       align-items: center;
-      margin-bottom: 1rem;
+      margin-bottom: 1.5rem;
     }
 
     /* Contador */
@@ -141,6 +140,7 @@
       background-color: #ff6b00;
       color: white;
       transition: all 0.3s ease;
+      margin-right: 0.5rem; /* Espaçamento entre botões */
     }
 
     button:hover {
@@ -336,12 +336,14 @@
       .controls {
         flex-direction: column;
         align-items: stretch;
+        gap: 0.75rem; /* Ajustado para dispositivos menores */
       }
 
       button {
         padding: 0.6rem 1.2rem;
         font-size: 0.9rem;
         width: 100%;
+        margin-right: 0;
       }
 
       input[type="text"],
@@ -379,6 +381,7 @@
       button {
         padding: 0.5rem 1rem;
         font-size: 0.85rem;
+        margin-right: 0;
       }
 
       input[type="text"],
@@ -423,7 +426,13 @@
     <div class="fichas-section">
       <div class="controls">
         <span id="contador">Total de fichas: 0</span>
-        <select id="comunidadeSelect">
+        <select id="motivoAuxilioSelect" onchange="filtrarPorMotivoEComunidade()">
+          <option value="todos">Todos os Motivos</option>
+          <option value="Enchente">Enchente</option>
+          <option value="Estiagem">Estiagem</option>
+          <option value="Incêndio">Incêndio</option>
+        </select>
+        <select id="comunidadeSelect" onchange="filtrarPorMotivoEComunidade()">
           <option value="todas">Todas as Comunidades</option>
         </select>
         <button onclick="promptGerarPDF()">Gerar PDF</button>
@@ -464,6 +473,7 @@
               <th>Seção do(a) Cônjuge</th>
               <th>Filhos</th>
               <th>Localidade</th>
+              <th>Motivo do Auxílio</th>
               <th>Ações</th>
             </tr>
           </thead>
@@ -518,6 +528,9 @@
           
           <label for="editLocalidade">Localidade</label>
           <input type="text" id="editLocalidade" name="localidade" />
+          
+          <label for="editMotivoAuxilio">Motivo do Auxílio</label>
+          <textarea id="editMotivoAuxilio" name="motivoAuxilio"></textarea>
           
           <input type="hidden" id="editId" name="id" />
           <button type="submit">Salvar</button>
@@ -583,18 +596,12 @@
         document.getElementById('loadingSpinner').style.display = 'block';
 
         try {
-          // Limpa o cache local
           localStorage.removeItem(LOCAL_STORAGE_KEY);
-
-          // Busca dados diretamente do Firestore
           const query = db.collection('fichas_acaoexecutada').orderBy('liderFamilia');
           const snapshot = await query.get();
           fichasCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-          // Salva os dados no localStorage
           localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(fichasCache));
           localStorage.setItem(LAST_UPDATE_KEY, now.toString());
-
           document.querySelector('#fichasTabela tbody').innerHTML = '';
           adicionarFichasNaTabela(fichasCache);
           atualizarContador();
@@ -617,7 +624,6 @@
         document.getElementById('loadingSpinner').style.display = 'block';
 
         try {
-          // Verifica se há dados no localStorage
           const cachedData = localStorage.getItem(LOCAL_STORAGE_KEY);
           if (cachedData) {
             try {
@@ -630,8 +636,8 @@
               atualizarEstadoBotao();
             } catch (parseError) {
               console.error("Erro ao parsear dados do localStorage:", parseError);
-              localStorage.removeItem(LOCAL_STORAGE_KEY); // Limpa cache corrompido
-              await carregarMaisFichas(); // Tenta carregar novamente
+              localStorage.removeItem(LOCAL_STORAGE_KEY);
+              await carregarMaisFichas();
               return;
             } finally {
               loading = false;
@@ -640,15 +646,11 @@
             return;
           }
 
-          // Se não há dados no localStorage, busca no Firestore
           const query = db.collection('fichas_acaoexecutada').orderBy('liderFamilia');
           const snapshot = await query.get();
           fichasCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-          // Salva os dados no localStorage
           localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(fichasCache));
           localStorage.setItem(LAST_UPDATE_KEY, Date.now().toString());
-
           document.querySelector('#fichasTabela tbody').innerHTML = '';
           adicionarFichasNaTabela(fichasCache);
           atualizarContador();
@@ -684,6 +686,7 @@
             <td>${f.secaoEsposa || '-'}</td>
             <td>${f.filhos || '-'}</td>
             <td>${f.localidade || '-'}</td>
+            <td>${Array.isArray(f.motivoAuxilio) ? f.motivoAuxilio.join(', ') : f.motivoAuxilio || '-'}</td>
             <td>
               <button class="editar" onclick="promptAbrirModalEditar('${f.id}')">Editar</button>
               <button class="excluir" onclick="promptExcluirFicha('${f.id}')">Excluir</button>
@@ -772,9 +775,11 @@
 
       function filtrarTabela() {
         const filtro = document.getElementById('buscaInput').value.toLowerCase();
+        const motivoFiltro = document.getElementById('motivoAuxilioSelect').value;
+        const comunidadeFiltro = document.getElementById('comunidadeSelect').value;
         const fichasContainer = document.getElementById('fichasContainer');
 
-        if (filtro.length < 4) {
+        if (filtro.length < 4 && motivoFiltro === 'todos' && comunidadeFiltro === 'todas') {
           fichasContainer.style.display = 'none';
           document.querySelectorAll('#fichasTabela tbody tr').forEach(row => {
             row.style.display = 'none';
@@ -783,24 +788,33 @@
         }
 
         fichasContainer.style.display = 'block';
-        document.querySelectorAll('#fichasTabela tbody tr').forEach(row => {
-          row.style.display = row.textContent.toLowerCase().includes(filtro) ? '' : 'none';
+        document.querySelectorAll('#fichasTabela tbody tr').forEach((row, index) => {
+          const ficha = fichasCache[index];
+          const textoRow = row.textContent.toLowerCase();
+          const matchesTexto = filtro.length < 4 || textoRow.includes(filtro);
+          const matchesMotivo = motivoFiltro === 'todos' || (Array.isArray(ficha.motivoAuxilio) ? ficha.motivoAuxilio.includes(motivoFiltro) : ficha.motivoAuxilio === motivoFiltro);
+          const matchesComunidade = comunidadeFiltro === 'todas' || ficha.localidade === comunidadeFiltro;
+          row.style.display = matchesTexto && matchesMotivo && matchesComunidade ? '' : 'none';
         });
+      }
+
+      function filtrarPorMotivoEComunidade() {
+        filtrarTabela();
       }
 
       function buscarFicha() {
         filtrarTabela();
-        // Minimiza o teclado em dispositivos móveis
         document.getElementById('buscaInput').blur();
       }
 
       function limparBusca() {
         document.getElementById('buscaInput').value = '';
+        document.getElementById('motivoAuxilioSelect').value = 'todos';
+        document.getElementById('comunidadeSelect').value = 'todas';
         document.getElementById('fichasContainer').style.display = 'none';
         document.querySelectorAll('#fichasTabela tbody tr').forEach(row => {
           row.style.display = 'none';
         });
-        // Minimiza o teclado em dispositivos móveis
         document.getElementById('buscaInput').blur();
       }
 
@@ -820,7 +834,6 @@
                 await db.collection('fichas_acaoexecutada').add(ficha);
               }
 
-              // Limpa o localStorage e recarrega os dados
               localStorage.removeItem(LOCAL_STORAGE_KEY);
               await carregarMaisFichas();
               alert("Backup importado com sucesso!");
@@ -862,6 +875,7 @@
         document.getElementById('editSecaoEsposa').value = ficha.secaoEsposa || '';
         document.getElementById('editFilhos').value = ficha.filhos || '';
         document.getElementById('editLocalidade').value = ficha.localidade || '';
+        document.getElementById('editMotivoAuxilio').value = Array.isArray(ficha.motivoAuxilio) ? ficha.motivoAuxilio.join(', ') : ficha.motivoAuxilio || '';
 
         document.getElementById('editModal').style.display = 'flex';
       }
@@ -896,7 +910,8 @@
           zonaEsposa: document.getElementById('editZonaEsposa').value || null,
           secaoEsposa: document.getElementById('editSecaoEsposa').value || null,
           filhos: document.getElementById('editFilhos').value || null,
-          localidade: document.getElementById('editLocalidade').value || null
+          localidade: document.getElementById('editLocalidade').value || null,
+          motivoAuxilio: document.getElementById('editMotivoAuxilio').value.split(',').map(item => item.trim()).filter(Boolean) || null
         };
 
         try {
@@ -906,7 +921,6 @@
           if (index !== -1) {
             fichasCache[index] = { id, ...updatedData };
           }
-          // Atualiza o localStorage
           localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(fichasCache));
           await carregarMaisFichas();
           fecharModal();
@@ -923,13 +937,14 @@
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({ orientation: "landscape" });
         const dataAtual = new Date().toLocaleDateString('pt-BR');
+        const motivoFiltro = document.getElementById('motivoAuxilioSelect').value;
         const comunidadeSelecionada = document.getElementById('comunidadeSelect').value;
 
         const headers = [
           'Líder', 'CPF Líder', 'Contato', 'Nascimento',
           'Título', 'Zona', 'Seção', 'Cônjuge',
           'CPF Cônjuge', 'Título Cônj.', 'Zona Cônj.',
-          'Seção Cônj.', 'Filhos', 'Localidade'
+          'Seção Cônj.', 'Filhos', 'Localidade', 'Motivo Auxílio'
         ];
 
         const pageWidth = doc.internal.pageSize.getWidth();
@@ -938,15 +953,16 @@
         const columnWidth = availableWidth / headers.length;
 
         const tableData = fichasCache
+          .filter(f => motivoFiltro === "todos" || (Array.isArray(f.motivoAuxilio) ? f.motivoAuxilio.includes(motivoFiltro) : f.motivoAuxilio === motivoFiltro))
           .filter(f => comunidadeSelecionada === "todas" || f.localidade === comunidadeSelecionada)
           .map(f => [
             f.liderFamilia || '-', f.cpfLider || '-', f.numeroContato || '-', formatarDataBR(f.dataNascimentoLider || ''),
             f.tituloEleitorLider || '-', f.zonaLider || '-', f.secaoLider || '-', f.nomeEsposa || '-',
             f.cpfEsposa || '-', f.tituloEleitorEsposa || '-', f.zonaEsposa || '-', f.secaoEsposa || '-',
-            f.filhos || '-', f.localidade || '-'
+            f.filhos || '-', f.localidade || '-', Array.isArray(f.motivoAuxilio) ? f.motivoAuxilio.join(', ') : f.motivoAuxilio || '-'
           ]);
 
-        const titulo = `Cadastros - ${comunidadeSelecionada === 'todas' ? 'Todas as Comunidades' : comunidadeSelecionada}`;
+        const titulo = `Cadastros - ${comunidadeSelecionada === 'todas' ? 'Todas as Comunidades' : comunidadeSelecionada} - ${motivoFiltro === 'todos' ? 'Todos os Motivos' : motivoFiltro}`;
         doc.setFontSize(14);
         doc.text(titulo, pageWidth / 2, 15, { align: "center" });
 
@@ -975,7 +991,7 @@
           }
         });
 
-        doc.save(`cadastros_${comunidadeSelecionada}.pdf`);
+        doc.save(`cadastros_${comunidadeSelecionada}_${motivoFiltro}.pdf`);
       }
 
       function promptGerarPDF() {
@@ -988,6 +1004,7 @@
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
         const dataAtual = new Date().toLocaleDateString('pt-BR');
+        const motivoFiltro = document.getElementById('motivoAuxilioSelect').value;
         const comunidadeSelecionada = document.getElementById('comunidadeSelect').value;
 
         const pageHeight = doc.internal.pageSize.getHeight();
@@ -995,7 +1012,9 @@
         const margin = 10;
         const maxWidth = doc.internal.pageSize.getWidth() - 2 * margin;
 
-        const familias = fichasCache.filter(f => comunidadeSelecionada === "todas" || f.localidade === comunidadeSelecionada);
+        const familias = fichasCache
+          .filter(f => motivoFiltro === "todos" || (Array.isArray(f.motivoAuxilio) ? f.motivoAuxilio.includes(motivoFiltro) : f.motivoAuxilio === motivoFiltro))
+          .filter(f => comunidadeSelecionada === "todas" || f.localidade === comunidadeSelecionada);
 
         let yOffset = margin;
         let receiptCount = 0;
@@ -1030,6 +1049,7 @@
           const additionalInfo = [
             `Cônjuge: ${familia.nomeEsposa || '____________________'} — CPF: ${familia.cpfEsposa || '____________________'}`,
             `Contato: ${familia.numeroContato || '____________________'}`,
+            `Motivo do Auxílio: ${Array.isArray(familia.motivoAuxilio) ? familia.motivoAuxilio.join(', ') : familia.motivoAuxilio || '____________________'}`,
             `Recebido por (se diferente do titular): ______________________________`
           ];
           additionalInfo.forEach(line => {
@@ -1070,7 +1090,7 @@
           doc.text(`Emitido em: ${dataAtual}`, doc.internal.pageSize.getWidth() - 40, pageHeight - 5);
         });
 
-        doc.save(`recibos_rancho_${comunidadeSelecionada}.pdf`);
+        doc.save(`recibos_rancho_${comunidadeSelecionada}_${motivoFiltro}.pdf`);
       }
 
       function promptGerarReciboPDF() {
@@ -1105,7 +1125,6 @@
         carregarMaisFichas();
         document.getElementById('inputBackup').addEventListener('change', importarBackup);
         document.getElementById('editForm').addEventListener('submit', salvarEdicao);
-        // Verifica o estado do botão ao carregar a página
         atualizarEstadoBotao();
       };
     </script>
