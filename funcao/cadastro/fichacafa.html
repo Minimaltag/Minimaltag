@@ -4,408 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Famílias Cadastradas</title>
+  <link rel="stylesheet" href="fichacafa.css">
   <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <style>
-    /* General Reset and Body Styling */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
-      color: #333;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-    }
-
-    /* Header Styling */
-    header {
-      background-color: #0077cc;
-      color: white;
-      padding: 1.5rem;
-      width: 100%;
-      text-align: center;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    h1 {
-      font-size: 2.25rem;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-    }
-
-    /* Main Content Area */
-    main {
-      background-color: #ffffff;
-      padding: 1.5rem;
-      border-radius: 12px;
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-      width: 90%;
-      max-width: 1200px;
-      margin: 1.5rem 0;
-    }
-
-    /* Fichas Section */
-    .fichas-section {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    /* Filters and Controls */
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem; /* Aumentado para melhor espaçamento */
-      align-items: center;
-      margin-bottom: 1.5rem;
-    }
-
-    /* Contador */
-    #contador {
-      font-weight: 600;
-      font-size: 1.1rem;
-      color: #333;
-    }
-
-    /* Inputs */
-    input[type="text"],
-    select {
-      padding: 0.75rem;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 1rem;
-      width: 100%;
-      max-width: 300px;
-      transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    input[type="text"]:focus,
-    select:focus {
-      border-color: #0077cc;
-      box-shadow: 0 0 0 3px rgba(0, 119, 204, 0.2);
-      outline: none;
-    }
-
-    /* Search Container */
-    .search-container {
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
-    }
-
-    /* Minimalist Buttons for Search and Clear */
-    .search-btn, .clear-search {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      border: none;
-      background-color: #0077cc;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .clear-search {
-      background-color: #6c757d;
-    }
-
-    .search-btn:hover, .clear-search:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-      opacity: 0.9;
-    }
-
-    /* Buttons */
-    button {
-      padding: 0.75rem 1.5rem;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 1rem;
-      font-weight: 600;
-      background-color: #ff6b00;
-      color: white;
-      transition: all 0.3s ease;
-      margin-right: 0.5rem; /* Espaçamento entre botões */
-    }
-
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-      opacity: 0.9;
-    }
-
-    /* Atualizar Button */
-    button.atualizar {
-      background-color: #28a745;
-    }
-
-    button.atualizar.disabled {
-      background-color: #dc3545;
-      cursor: not-allowed;
-    }
-
-    button.atualizar.disabled:hover {
-      transform: none;
-      box-shadow: none;
-      opacity: 1;
-    }
-
-    /* Table Styling */
-    #fichasContainer {
-      overflow-x: auto;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-      display: none; /* Initially hidden */
-    }
-
-    #fichasTabela {
-      width: 100%;
-      border-collapse: collapse;
-      background-color: #f9f9f9;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-
-    #fichasTabela thead {
-      background-color: #e0e7ef;
-      color: #333;
-    }
-
-    #fichasTabela th,
-    #fichasTabela td {
-      padding: 0.75rem;
-      text-align: left;
-      border: 1px solid #ddd;
-      font-size: 0.95rem;
-    }
-
-    #fichasTabela tbody tr:nth-child(even) {
-      background-color: #f0f4f8;
-    }
-
-    #fichasTabela tbody tr:hover {
-      background-color: #e6f0fa;
-      transition: background-color 0.2s ease;
-    }
-
-    /* Action Buttons in Table */
-    #fichasTabela td button {
-      padding: 0.5rem 1rem;
-      font-size: 0.9rem;
-      margin-right: 0.5rem;
-    }
-
-    #fichasTabela td button.editar {
-      background-color: #0077cc;
-    }
-
-    #fichasTabela td button.excluir {
-      background-color: #dc3545;
-    }
-
-    /* Highlight Duplicates */
-    .highlight-duplicate {
-      background-color: #ffe5e5 !important;
-    }
-
-    /* Duplicates Container */
-    #duplicadosContainer {
-      display: none;
-      background: #f9f9f9;
-      padding: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      margin-top: 1rem;
-      max-height: 300px;
-      overflow-y: auto;
-    }
-
-    #duplicadosContainer h3 {
-      margin: 0 0 0.5rem;
-      color: #c0392b;
-      font-size: 1.25rem;
-    }
-
-    #listaDuplicados li {
-      padding: 0.5rem 0;
-      font-size: 0.95rem;
-    }
-
-    /* Loading Spinner */
-    #loadingSpinner {
-      display: none;
-      position: fixed;
-      z-index: 999;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      border: 6px solid #f3f3f3;
-      border-top: 6px solid #e74c3c;
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      0% { transform: translate(-50%, -50%) rotate(0deg); }
-      100% { transform: translate(-50%, -50%) rotate(360deg); }
-    }
-
-    /* Modal Styling */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
-      justify-content: center;
-      align-items: center;
-    }
-
-    .modal-content {
-      background-color: #fff;
-      padding: 2rem;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 600px;
-      max-height: 80vh;
-      overflow-y: auto;
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-    }
-
-    .modal-content h2 {
-      margin-bottom: 1rem;
-      font-size: 1.5rem;
-      color: #333;
-    }
-
-    .modal-content label {
-      display: block;
-      margin: 0.5rem 0 0.2rem;
-      font-weight: 600;
-    }
-
-    .modal-content input,
-    .modal-content textarea {
-      width: 100%;
-      padding: 0.75rem;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 1rem;
-      margin-bottom: 1rem;
-    }
-
-    .modal-content button {
-      margin-right: 1rem;
-    }
-
-    .modal-content button.cancelar {
-      background-color: #6c757d;
-    }
-
-    /* Responsive Design */
-    @media (max-width: 768px) {
-      h1 {
-        font-size: 1.75rem;
-      }
-
-      main {
-        padding: 1rem;
-        width: 95%;
-      }
-
-      .controls {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.75rem; /* Ajustado para dispositivos menores */
-      }
-
-      button {
-        padding: 0.6rem 1.2rem;
-        font-size: 0.9rem;
-        width: 100%;
-        margin-right: 0;
-      }
-
-      input[type="text"],
-      select {
-        padding: 0.6rem;
-        font-size: 0.9rem;
-      }
-
-      .search-btn, .clear-search {
-        width: 35px;
-        height: 35px;
-      }
-
-      #fichasTabela th,
-      #fichasTabela td {
-        padding: 0.5rem;
-        font-size: 0.85rem;
-      }
-
-      .modal-content {
-        padding: 1rem;
-        width: 95%;
-      }
-    }
-
-    @media (max-width: 480px) {
-      h1 {
-        font-size: 1.5rem;
-      }
-
-      main {
-        padding: 0.75rem;
-      }
-
-      button {
-        padding: 0.5rem 1rem;
-        font-size: 0.85rem;
-        margin-right: 0;
-      }
-
-      input[type="text"],
-      select {
-        padding: 0.5rem;
-        font-size: 0.8rem;
-      }
-
-      .search-btn, .clear-search {
-        width: 30px;
-        height: 30px;
-      }
-
-      #fichasTabela th,
-      #fichasTabela td {
-        padding: 0.4rem;
-        font-size: 0.75rem;
-      }
-
-      .modal-content {
-        padding: 0.75rem;
-      }
-    }
-  </style>
 </head>
 <body>
   <script type="module">
@@ -439,8 +44,8 @@
         <button onclick="promptGerarReciboPDF()">Gerar Recibo PDF</button>
         <input type="file" id="inputBackup" accept=".json" style="display: none;" />
         <button onclick="promptImportarBackup()">Importar Backup JSON</button>
+        <button onclick="promptExportarBackup()">Exportar Backup JSON</button>
         <button onclick="promptToggleDuplicados()">Ver Duplicados</button>
-        <button onclick="promptAbrirConversor()">Abrir Conversor</button>
         <button id="atualizarButton" class="atualizar" onclick="atualizarDados()">Atualizar</button>
       </div>
 
@@ -718,7 +323,7 @@
             f.nomeEsposa?.trim().toLowerCase(),
             f.cpfLider?.trim(),
             f.cpfEsposa?.trim()
-          ];
+          ].filter(Boolean); // Apenas nomes e CPFs de líder e cônjuge
           chaves.forEach(c => {
             if (!c) return;
             duplicados[c] = duplicados[c] || [];
@@ -737,9 +342,11 @@
         const lista = document.getElementById('listaDuplicados');
         lista.innerHTML = '';
         duplicadosFiltrados.forEach(([chave, fichas]) => {
-          const li = document.createElement('li');
           const comunidades = [...new Set(fichas.map(f => f.localidade || '-'))];
-          li.textContent = `${chave} - Comunidades: ${comunidades.join(', ')}`;
+          const nomes = fichas.map(f => f.liderFamilia || '-').join(', ');
+          const cpfs = fichas.map(f => f.cpfLider || f.cpfEsposa || '-').join(', ');
+          const li = document.createElement('li');
+          li.textContent = `${chave} - Comunidades: ${comunidades.join(', ')} - Nomes: ${nomes} - CPFs: ${cpfs}`;
           lista.appendChild(li);
         });
       }
@@ -853,6 +460,29 @@
       function promptImportarBackup() {
         if (verificarSenha()) {
           document.getElementById('inputBackup').click();
+        }
+      }
+
+      function exportarBackup() {
+        try {
+          const data = JSON.stringify(fichasCache, null, 2);
+          const blob = new Blob([data], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `backup_fichas_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+          alert("Backup exportado com sucesso!");
+        } catch (error) {
+          console.error("Erro ao exportar backup:", error);
+          alert("Erro ao exportar backup: " + error.message);
+        }
+      }
+
+      function promptExportarBackup() {
+        if (verificarSenha()) {
+          exportarBackup();
         }
       }
 
@@ -1099,16 +729,6 @@
         }
       }
 
-      function abrirConversor() {
-        window.open("conversor.html", "_blank");
-      }
-
-      function promptAbrirConversor() {
-        if (verificarSenha()) {
-          abrirConversor();
-        }
-      }
-
       function popularComunidades() {
         const select = document.getElementById('comunidadeSelect');
         const comunidades = [...new Set(fichasCache.map(f => f.localidade).filter(Boolean))];
@@ -1130,4 +750,4 @@
     </script>
   </main>
 </body>
-  </html>
+    </html>
