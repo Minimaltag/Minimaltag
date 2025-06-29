@@ -19,7 +19,23 @@
       flex-direction: column;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-      user-select: none; /* Prevents text selection */
+      user-select: none;
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('assets/logo.png');
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: 50%;
+      opacity: 0.1;
+      z-index: -1;
     }
     button, a { outline: none; }
     .header-bg {
@@ -50,6 +66,9 @@
     .modal-content::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
     .action-button {
       transition: all 0.2s ease;
+      width: 100%;
+      max-width: 300px;
+      margin: 0.5rem auto;
     }
     .action-button:hover {
       transform: translateY(-2px);
@@ -63,20 +82,41 @@
       padding: 1rem;
     }
     main { padding-bottom: 1rem; }
+    .contact-info {
+      font-size: 0.9rem;
+      color: #666;
+    }
+    .contact-info a {
+      color: #3b82f6;
+      text-decoration: none;
+    }
+    .contact-info a:hover {
+      text-decoration: underline;
+    }
     @media (max-width: 640px) {
       .modal-content { margin: 15% auto; padding: 1rem; }
+      body::before {
+        background-size: 80%;
+      }
     }
-  </style>
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+  </style>  
 </head>
 <body>
   <!-- Firebase Auth -->  
-<script type="module">
+  <script type="module">
     import { auth } from './js/firebase-config.js';
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     onAuthStateChanged(auth, (user) => {
       if (!user) {
-        // Se não estiver logado, redireciona para login
         window.location.href = "index.html";
       }
     });
@@ -85,7 +125,7 @@
   <header class="header-bg text-white py-6">
     <div class="container mx-auto px-4 text-center">
       <h1 class="text-3xl font-bold">Minimaltag</h1>
-      <p class="text-base mt-1">Essencial em cada linha de código</p>
+      <p class="text-base mt-1">Essencial em cada linha</p>
     </div>
   </header>
 
@@ -97,20 +137,26 @@
     </div>
 
     <!-- Action Buttons -->
-    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <button class="action-button bg-blue-600 text-white py-2 px-4 rounded shadow hover:bg-blue-700" onclick="window.location.href='funcao/mural/bt.html'">Mural</button>
-      <button class="action-button bg-blue-600 text-white py-2 px-4 rounded shadow hover:bg-blue-700" onclick="bloquearCadastro()">Cadastro de Famílias</button>
-      <button class="action-button bg-blue-600 text-white py-2 px-4 rounded shadow hover:bg-blue-700" onclick="window.location.href='funcao/relatorio/acaoreac.html'">Registros de Ações</button>
-      <button class="action-button bg-blue-600 text-white py-2 px-4 rounded shadow hover:bg-blue-700" onclick="window.location.href='funcao/jg/bt.html'">Passa Tempo</button>
+    <section class="grid grid-cols-1 gap-4">
+      <button class="action-button bg-blue-600 text-white py-2 px-4 rounded shadow hover:bg-blue-700" onclick="window.location.href='funcao/mural/bt.html'">MURAL</button>
+      <button class="action-button bg-blue-600 text-white py-2 px-4 rounded shadow hover:bg-blue-700" onclick="bloquearCadastro()">CADASTROS DE FAMILIAS</button>
+      <button class="action-button bg-blue-600 text-white py-2 px-4 rounded shadow hover:bg-blue-700" onclick="window.location.href='funcao/relatorio/acaoreac.html'">REGISTRO DE AÇÕES</button>
+      <button class="action-button bg-blue-600 text-white py-2 px-4 rounded shadow hover:bg-blue-700" onclick="window.location.href='funcao/jg/bt.html'">PASSA TEMPO</button>
     </section>
 
-    <!-- Modal -->
+    <!-- Contact Info -->
+    <div class="text-center mt-6 contact упоминать-info">
+      <p>Contato: <a href="tel:+5592988471722">+55 (92) 8847-1722</a></p>
+      <p>Suporte: <a href="mailto:minimaltag7@gmail.com">minimaltag7@gmail.com</a></p>
+    </div>
+
+    <!-- Terms Modal -->
     <div id="termsModal" class="modal">
       <div class="modal-content">
         <h2 class="text-xl font-bold text-gray-800 mb-3">Termos e Responsabilidades</h2>
         <div class="text-gray-700 text-sm">
           <h3 class="text-lg font-semibold mb-2">Termo de Uso - MTAG</h3>
-          <p><strong>Versão 1.0 – Junho 2025</strong></p>
+          <p><strong>Versão 1.0 – Junho 202 numărul0</strong></p>
           <h4 class="font-semibold mt-3">1. Apresentação</h4>
           <p class="mb-2">O MTAG auxilia a SEMPDEC com cadastro de famílias, relatórios, documentos na nuvem, mural, chat anônimo e mais.</p>
           <h4 class="font-semibold mt-3">2. Acesso</h4>
@@ -133,21 +179,39 @@
       </div>
     </div>
 
+    <!-- PIN Modal -->
+    <div id="pinModal" class="modal">
+      <div class="modal-content">
+        <h2 class="text-xl font-bold text-gray-800 mb-3">Digite o PIN de Acesso</h2>
+        <input
+          type="number"
+          id="pinInput"
+          class="w-full p-2 mb-4 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+          placeholder="PIN de 4 dígitos"
+          maxlength="4"
+          pattern="\d{4}"
+          oninput="this.value = this.value.slice(0, 4); if(this.value.length === 4) validatePin(this.value);"
+        />
+      </div>
+    </div>
+
     <!-- Footer -->
     <footer class="col-span-full text-center text-sm text-gray-500 mt-6 bg-transparent">
-      © 2025 Desenvolvido por Darlan Cardoso | V. 3.16.6
+      © 2025 Desenvolvido por Darlan Cardoso | V. 3.28.6
     </footer>
   </main>
 
   <!-- JavaScript -->
   <script>
-    const modal = document.getElementById("termsModal");
+    const termsModal = document.getElementById("termsModal");
     const agreeBtn = document.getElementById("agreeBtn");
     const disagreeBtn = document.getElementById("disagreeBtn");
+    const pinModal = document.getElementById("pinModal");
+    const pinInput = document.getElementById("pinInput");
 
     agreeBtn.onclick = () => {
       localStorage.setItem("termsAccepted", "true");
-      modal.style.display = "none";
+      termsModal.style.display = "none";
     };
 
     disagreeBtn.onclick = () => {
@@ -156,24 +220,68 @@
     };
 
     window.onclick = (e) => {
-      if (e.target === modal) modal.style.display = "none";
+      if (e.target === termsModal) termsModal.style.display = "none";
+      if (e.target === pinModal) pinModal.style.display = "none";
     };
 
     function bloquearCadastro() {
-      const pin = prompt("Digite o PIN de acesso:");
-      if (pin === "2023") {
+      // Check if the user is locked out
+      const lockoutTime = localStorage.getItem("lockoutTime");
+      const now = new Date().getTime();
+      const lockoutDuration = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+
+      if (lockoutTime && now < parseInt(lockoutTime) + lockoutDuration) {
+        const remainingTime = Math.ceil((parseInt(lockoutTime) + lockoutDuration - now) / (60 * 1000));
+        alert(`Acesso suspenso. Tente novamente em ${remainingTime} minutos.`);
+        return;
+      }
+
+      // Show PIN input modal
+      pinModal.style.display = "block";
+      pinInput.value = "";
+      pinInput.focus();
+    }
+
+    function validatePin(pin) {
+      const correctPin = "2023";
+      let failedAttempts = parseInt(localStorage.getItem("failedAttempts") || "0");
+      const now = new Date().getTime();
+
+      // Validate PIN
+      if (pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+        alert("O PIN deve conter exatamente 4 dígitos numéricos.");
+        pinModal.style.display = "none";
+        return;
+      }
+
+      if (pin === correctPin) {
+        // Reset failed attempts on successful login
+        localStorage.setItem("failedAttempts", "0");
+        localStorage.removeItem("lockoutTime");
+        pinModal.style.display = "none";
         window.location.href = "funcao/cadastro/acaocafa.html";
-      } else if (pin !== null) {
-        alert("PIN incorreto. Acesso negado.");
+      } else {
+        failedAttempts++;
+        localStorage.setItem("failedAttempts", failedAttempts.toString());
+
+        if (failedAttempts >= 3) {
+          // Set lockout time
+          localStorage.setItem("lockoutTime", now.toString());
+          localStorage.setItem("failedAttempts", "0");
+          alert("PIN incorreto. Acesso suspenso por 8 horas devido a 3 tentativas inválidas.");
+        } else {
+          alert(`PIN incorreto. Você tem ${3 - failedAttempts} tentativa(s) restante(s).`);
+        }
+        pinModal.style.display = "none";
       }
     }
-    
+
     window.addEventListener("DOMContentLoaded", () => {
       const accepted = localStorage.getItem("termsAccepted");
       if (!accepted) {
-        modal.style.display = "block";
+        termsModal.style.display = "block";
       }
     });
   </script>
 </body>
-</html>
+            </html>
