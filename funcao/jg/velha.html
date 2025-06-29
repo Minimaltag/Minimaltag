@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Jogo da Velha</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: Poppins, Arial, sans-serif;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: #fff;
+      min-height: 100vh;
+      margin: 0;
+      overflow-y: auto;
+    }
+    h1 {
+      font-size: 2.5em;
+      text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
+      margin: 15px 0;
+      animation: fadeIn 0.8s ease-in;
+    }
+    #icon-selector {
+      margin: 15px 0;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+    .icon-option {
+      font-size: 2em;
+      padding: 10px 20px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 2px solid #fff;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .icon-option:hover {
+      background: rgba(255, 255, 255, 0.25);
+      transform: scale(1.1);
+    }
+    .icon-option.selected {
+      background: #28a745;
+      border-color: #28a745;
+      transform: scale(1.1);
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 120px);
+      gap: 8px;
+      margin: 15px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 10px;
+      border-radius: 12px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    }
+    .cell {
+      width: 120px;
+      height: 120px;
+      background: #fff;
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 3em;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .cell:hover {
+      transform: scale(1.05);
+      background: #f1f1f1;
+    }
+    .cell.filled {
+      cursor: not-allowed;
+    }
+    #status {
+      font-size: 1.4em;
+      margin: 15px 0;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+      animation: fadeIn 0.8s ease-in;
+    }
+    #reset {
+      padding: 12px 24px;
+      font-size: 1.1em;
+      background: #dc3545;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    #reset:hover {
+      background: #c82333;
+      transform: scale(1.05);
+    }
+    #scoreboard {
+      margin: 15px 0;
+      font-size: 1.2em;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 10px;
+      border-radius: 8px;
+      display: flex;
+      gap: 20px;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: #fff;
+      color: #333;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+      animation: slideIn 0.4s ease;
+    }
+    .modal-content h2 {
+      margin: 0 0 15px;
+      font-size: 1.8em;
+    }
+    .modal-content button {
+      padding: 8px 16px;
+      font-size: 1em;
+      background: #28a745;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .modal-content button:hover {
+      background: #218838;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideIn {
+      from { transform: translateY(-30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    canvas#confetti {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+  <h1>Jogo da Velha</h1>
+  <div id="icon-selector">
+    <span class="icon-option" data-icon="🛡️">🛡️</span>
+    <span class="icon-option" data-icon="🚨">🚨</span>
+    <span class="icon-option" data-icon="⛑️">⛑️</span>
+    <span class="icon-option" data-icon="🚒">🚒</span>
+  </div>
+  <div id="status">Escolha seu ícone!</div>
+  <div class="board" id="board">
+    <div class="cell" data-index="0"></div>
+    <div class="cell" data-index="1"></div>
+    <div class="cell" data-index="2"></div>
+    <div class="cell" data-index="3"></div>
+    <div class="cell" data-index="4"></div>
+    <div class="cell" data-index="5"></div>
+    <div class="cell" data-index="6"></div>
+    <div class="cell" data-index="7"></div>
+    <div class="cell" data-index="8"></div>
+  </div>
+  <div id="scoreboard">
+    <span>Vitórias: <span id="wins">0</span></span>
+    <span>Empates: <span id="draws">0</span></span>
+    <span>Derrotas: <span id="losses">0</span></span>
+  </div>
+  <button id="reset">Reiniciar</button>
+  <div class="modal" id="result-modal">
+    <div class="modal-content">
+      <h2 id="modal-message"></h2>
+      <button id="play-again">Jogar Novamente</button>
+    </div>
+  </div>
+  <canvas id="confetti"></canvas>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+  <script>
+    // Seleção de elementos do DOM
+    const cells = document.querySelectorAll('.cell');
+    const status = document.getElementById('status');
+    const resetButton = document.getElementById('reset');
+    const iconOptions = document.querySelectorAll('.icon-option');
+    const modal = document.getElementById('result-modal');
+    const modalMessage = document.getElementById('modal-message');
+    const playAgainButton = document.getElementById('play-again');
+    const winsSpan = document.getElementById('wins');
+    const drawsSpan = document.getElementById('draws');
+    const lossesSpan = document.getElementById('losses');
+
+    // Estado do jogo
+    let currentPlayer = 'X';
+    let playerIcon = localStorage.getItem('playerIcon') || null;
+    let aiIcon = '💀';
+    let gameBoard = ['', '', '', '', '', '', '', '', ''];
+    let gameActive = false;
+    let scoreboard = JSON.parse(localStorage.getItem('scoreboard')) || { wins: 0, draws: 0, losses: 0 };
+    let gameEnded = false; // Nova variável para controlar o fim do jogo
+
+    // Combinações vencedoras
+    const winningCombinations = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8], // Linhas
+      [0, 3, 6], [1, 4, 7], [2, 5, 8], // Colunas
+      [0, 4, 8], [2, 4, 6] // Diagonais
+    ];
+
+    // Atualiza a exibição do placar
+    function updateScoreboardDisplay() {
+      winsSpan.textContent = scoreboard.wins;
+      drawsSpan.textContent = scoreboard.draws;
+      lossesSpan.textContent = scoreboard.losses;
+      localStorage.setItem('scoreboard', JSON.stringify(scoreboard));
+    }
+
+    // Inicializa o jogo
+    function initializeGame() {
+      updateScoreboardDisplay();
+      if (playerIcon) {
+        iconOptions.forEach(option => {
+          if (option.dataset.icon === playerIcon) {
+            option.classList.add('selected');
+          }
+          option.style.pointerEvents = option.dataset.icon === playerIcon ? 'none' : 'auto';
+        });
+        status.textContent = `Vez do jogador: ${playerIcon}`;
+        gameActive = true;
+      } else {
+        status.textContent = 'Escolha seu ícone!';
+      }
+    }
+
+    // Seleciona o ícone do jogador
+    function selectIcon(event) {
+      iconOptions.forEach(option => option.classList.remove('selected'));
+      event.target.classList.add('selected');
+      playerIcon = event.target.dataset.icon;
+      localStorage.setItem('playerIcon', playerIcon);
+      status.textContent = `Vez do jogador: ${playerIcon}`;
+      gameActive = true;
+      cells.forEach(cell => cell.classList.remove('filled'));
+      iconOptions.forEach(option => {
+        option.style.pointerEvents = option.dataset.icon === playerIcon ? 'none' : 'auto';
+      });
+    }
+
+    // Lida com o clique em uma célula
+    function handleCellClick(event) {
+      const index = event.target.dataset.index;
+      if (gameBoard[index] === '' && gameActive && currentPlayer === 'X') {
+        makeMove(index, playerIcon);
+        if (gameActive) {
+          setTimeout(aiMove, 500);
+        }
+      }
+    }
+
+    // Realiza uma jogada
+    function makeMove(index, icon) {
+      gameBoard[index] = icon;
+      cells[index].textContent = icon;
+      cells[index].classList.add('filled');
+      checkWinner();
+      if (gameActive) {
+        currentPlayer = icon === playerIcon ? 'O' : 'X';
+        status.textContent = `Vez do jogador: ${currentPlayer === 'X' ? playerIcon : aiIcon}`;
+      }
+    }
+
+    // Movimento da IA
+    function aiMove() {
+      // Verifica se a IA pode vencer
+      for (let [a, b, c] of winningCombinations) {
+        if (gameBoard[a] === aiIcon && gameBoard[b] === aiIcon && gameBoard[c] === '') {
+          makeMove(c, aiIcon);
+          return;
+        }
+        if (gameBoard[a] === aiIcon && gameBoard[c] === aiIcon && gameBoard[b] === '') {
+          makeMove(b, aiIcon);
+          return;
+        }
+        if (gameBoard[b] === aiIcon && gameBoard[c] === aiIcon && gameBoard[a] === '') {
+          makeMove(a, aiIcon);
+          return;
+        }
+      }
+
+      // Bloqueia uma jogada vencedora do jogador
+      for (let [a, b, c] of winningCombinations) {
+        if (gameBoard[a] === playerIcon && gameBoard[b] === playerIcon && gameBoard[c] === '') {
+          makeMove(c, aiIcon);
+          return;
+        }
+        if (gameBoard[a] === playerIcon && gameBoard[c] === playerIcon && gameBoard[b] === '') {
+          makeMove(b, aiIcon);
+          return;
+        }
+        if (gameBoard[b] === playerIcon && gameBoard[c] === playerIcon && gameBoard[a] === '') {
+          makeMove(a, aiIcon);
+          return;
+        }
+      }
+
+      // Escolhe uma célula vazia aleatoriamente
+      const emptyCells = gameBoard.map((val, i) => val === '' ? i : null).filter(i => i !== null);
+      if (emptyCells.length > 0) {
+        const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+        makeMove(randomIndex, aiIcon);
+      }
+    }
+
+    // Verifica se há um vencedor
+    function checkWinner() {
+      if (gameEnded) return; // Evita múltiplas verificações após o fim do jogo
+
+      for (let [a, b, c] of winningCombinations) {
+        if (gameBoard[a] && gameBoard[a] === gameBoard[b] && gameBoard[a] === gameBoard[c]) {
+          gameActive = false;
+          gameEnded = true; // Marca o jogo como finalizado
+          if (gameBoard[a] === playerIcon) {
+            scoreboard.wins++;
+            showModal('Você venceu!');
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+          } else {
+            scoreboard.losses++;
+            showModal('IA venceu!');
+          }
+          updateScoreboardDisplay();
+          enableIconSelection();
+          return;
+        }
+      }
+      if (!gameBoard.includes('')) {
+        gameActive = false;
+        gameEnded = true; // Marca o jogo como finalizado
+        scoreboard.draws++;
+        showModal('Empate!');
+        updateScoreboardDisplay();
+        enableIconSelection();
+      }
+    }
+
+    // Exibe o modal com a mensagem de resultado
+    function showModal(message) {
+      modalMessage.textContent = message;
+      modal.style.display = 'flex';
+    }
+
+    // Habilita a seleção de ícones
+    function enableIconSelection() {
+      iconOptions.forEach(option => {
+        option.style.pointerEvents = option.dataset.icon === playerIcon ? 'none' : 'auto';
+      });
+      status.textContent = playerIcon ? `Vez do jogador: ${playerIcon}` : 'Escolha seu ícone!';
+      gameActive = !!playerIcon;
+    }
+
+    // Reinicia o jogo
+    function resetGame() {
+      gameBoard = ['', '', '', '', '', '', '', '', ''];
+      currentPlayer = 'X';
+      gameActive = !!playerIcon;
+      gameEnded = false; // Reseta o controle de fim de jogo
+      cells.forEach(cell => {
+        cell.textContent = '';
+        cell.classList.remove('filled');
+      });
+      modal.style.display = 'none';
+      status.textContent = playerIcon ? `Vez do jogador: ${playerIcon}` : 'Escolha seu ícone!';
+      iconOptions.forEach(option => {
+        if (option.dataset.icon !== playerIcon) {
+          option.classList.remove('selected');
+        }
+        option.style.pointerEvents = option.dataset.icon === playerIcon ? 'none' : 'auto';
+      });
+    }
+
+    // Adiciona eventos
+    iconOptions.forEach(option => option.addEventListener('click', selectIcon));
+    cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+    resetButton.addEventListener('click', resetGame);
+    playAgainButton.addEventListener('click', resetGame);
+
+    // Inicializa o jogo ao carregar a página
+    initializeGame();
+  </script>
+</body>
+</html>
