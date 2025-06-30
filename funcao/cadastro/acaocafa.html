@@ -447,18 +447,22 @@
       const secaoEsposa = document.getElementById('secaoEsposa').value.trim();
       const filhos = document.getElementById('filhos').value.trim();
       const localidade = document.getElementById('localidadeSelect').value;
-      const motivoAuxilio = Array.from(document.getElementById('motivoAuxilio').selectedOptions).map(option => option.value);
+      const motivoAuxilioSelect = document.getElementById('motivoAuxilio');
+      const motivoAuxilio = Array.from(motivoAuxilioSelect.selectedOptions).map(option => option.value);
 
-      if (!liderFamilia || !cpfLider || !localidade || !motivoAuxilio.length) {
+      // Validação dos campos obrigatórios
+      if (!liderFamilia || !cpfLider || !localidade || motivoAuxilio.length === 0) {
         alert('Preencha todos os campos obrigatórios: Líder de Família, CPF do Líder, Comunidade e Motivo do Auxílio.');
         return;
       }
 
+      // Validação do CPF do líder
       if (!validarCPF(cpfLider)) {
         alert('CPF do líder inválido.');
         return;
       }
 
+      // Validação do CPF do cônjuge, se preenchido
       if (cpfEsposa && !validarCPF(cpfEsposa)) {
         alert('CPF do(a) cônjuge inválido.');
         return;
@@ -485,9 +489,12 @@
         });
 
         alert('Ficha salva com sucesso!');
+
+        // Limpar o formulário
         document.querySelectorAll("input").forEach(el => el.value = '');
         document.getElementById("localidadeSelect").value = "";
-        document.getElementById("motivoAuxilio").selectedIndex = -1;
+        // Limpar o select multiple
+        Array.from(motivoAuxilioSelect.options).forEach(option => option.selected = false);
         document.getElementById("cpfLiderFeedback").textContent = '';
         document.getElementById("cpfEsposaFeedback").textContent = '';
       } catch (error) {
@@ -497,4 +504,4 @@
     }
   </script>
 </body>
-</html>
+  </html>
