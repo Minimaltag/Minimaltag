@@ -64,7 +64,7 @@
 
     .form-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: 1fr; /* Single column for all screen sizes */
       gap: 25px;
     }
 
@@ -195,10 +195,6 @@
         font-size: 2.2rem;
       }
 
-      .form-grid {
-        grid-template-columns: 1fr;
-      }
-
       .button-row {
         flex-direction: column;
         align-items: stretch;
@@ -291,14 +287,6 @@
           <label for="filhos">Filhos</label>
           <input type="text" id="filhos" placeholder="Filhos" maxlength="2" inputmode="numeric" pattern="\d*" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,2)" />
         </div>
-        <div class="form-group">
-          <label for="motivoAuxilio">Motivo do Auxílio *</label>
-          <select id="motivoAuxilio" multiple required>
-            <option value="Estiagem">Estiagem</option>
-            <option value="Enchente">Enchente</option>
-            <option value="Incêndio">Incêndio</option>
-          </select>
-        </div>
         <div class="form-group localidade-group">
           <label for="localidadeSelect">Comunidade *</label>
           <div style="display: flex; gap: 8px;">
@@ -309,7 +297,14 @@
             <button onclick="adicionarLocalidade()">Adicionar</button>
           </div>
         </div>
-        
+        <div class="form-group">
+          <label for="motivoAuxilio">Motivo do Auxílio *</label>
+          <select id="motivoAuxilio" multiple required>
+            <option value="Estiagem">Estiagem</option>
+            <option value="Enchente">Enchente</option>
+            <option value="Incêndio">Incêndio</option>
+          </select>
+        </div>
       </div>
       <div class="button-row">
         <button class="btn-salvar" onclick="adicionarFicha()">Salvar</button>
@@ -513,4 +508,4 @@
     }
   </script>
 </body>
-          </html>
+                                                                                          </html>
