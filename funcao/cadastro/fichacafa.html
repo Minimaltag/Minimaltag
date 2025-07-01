@@ -40,12 +40,12 @@
         <select id="comunidadeSelect" onchange="filtrarPorMotivoEComunidade()">
           <option value="todas">Todas as Comunidades</option>
         </select>
-        <button onclick="promptGerarPDF()">Gerar PDF</button>
-        <button onclick="promptGerarReciboPDF()">Gerar Recibo PDF</button>
+        <button onclick="gerarPDF()">Gerar PDF</button>
+        <button onclick="gerarReciboPDF()">Gerar Recibo PDF</button>
         <input type="file" id="inputBackup" accept=".json" style="display: none;" />
-        <button onclick="promptImportarBackup()">Importar Backup JSON</button>
-        <button onclick="promptExportarBackup()">Exportar Backup JSON</button>
-        <button onclick="promptToggleDuplicados()">Ver Duplicados</button>
+        <button onclick="document.getElementById('inputBackup').click()">Importar Backup JSON</button>
+        <button onclick="exportarBackup()">Exportar Backup JSON</button>
+        <button onclick="toggleDuplicados()">Ver Duplicados</button>
         <button id="atualizarButton" class="atualizar" onclick="atualizarDados()">Atualizar</button>
       </div>
 
@@ -160,18 +160,8 @@
       let loading = false;
       const LOCAL_STORAGE_KEY = 'fichasCache';
       const LAST_UPDATE_KEY = 'lastUpdateTimestamp';
-      const COOLDOWN_HOURS = 8;
-      const COOLDOWN_MS = COOLDOWN_HOURS * 60 * 60 * 1000; // 8 horas em milissegundos
-      const PASSWORD = '0000';
-
-      function verificarSenha(acao) {
-        const senha = prompt("Digite a senha para continuar:");
-        if (senha !== PASSWORD) {
-          alert("Senha incorreta.");
-          return false;
-        }
-        return true;
-      }
+      const COOLDOWN_MINUTES = 240;
+      const COOLDOWN_MS = COOLDOWN_MINUTES * 60 * 1000; // 240 minutos em milissegundos
 
       function atualizarEstadoBotao() {
         const atualizarButton = document.getElementById('atualizarButton');
@@ -293,8 +283,8 @@
             <td>${f.localidade || '-'}</td>
             <td>${Array.isArray(f.motivoAuxilio) ? f.motivoAuxilio.join(', ') : f.motivoAuxilio || '-'}</td>
             <td>
-              <button class="editar" onclick="promptAbrirModalEditar('${f.id}')">Editar</button>
-              <button class="excluir" onclick="promptExcluirFicha('${f.id}')">Excluir</button>
+              <button class="editar" onclick="abrirModalEditar('${f.id}')">Editar</button>
+              <button class="excluir" onclick="excluirFicha('${f.id}')">Excluir</button>
             </td>
           `;
           tbody.appendChild(tr);
@@ -319,20 +309,21 @@
         const duplicados = {};
         fichasCache.forEach(f => {
           const chaves = [
-            f.liderFamilia?.trim().toLowerCase(),
-            f.nomeEsposa?.trim().toLowerCase(),
-            f.cpfLider?.trim(),
-            f.cpfEsposa?.trim()
-          ].filter(Boolean); // Apenas nomes e CPFs de líder e cônjuge
+            { key: f.liderFamilia?.trim().toLowerCase(), type: 'Nome do Líder' },
+            { key: f.nomeEsposa?.trim().toLowerCase(), type: 'Nome do Cônjuge' },
+            { key: f.cpfLider?.trim(), type: 'CPF do Líder' },
+            { key: f.cpfEsposa?.trim(), type: 'CPF do Cônjuge' }
+          ].filter(item => item.key);
           chaves.forEach(c => {
-            if (!c) return;
-            duplicados[c] = duplicados[c] || [];
-            duplicados[c].push(f);
+            if (!c.key) return;
+            duplicados[c.key] = duplicados[c.key] || { fichas: [], type: c.type };
+            duplicados[c.key].fichas.push(f);
+            duplicados[c.key].type = c.type;
           });
         });
 
-        const duplicadosFiltrados = Object.entries(duplicados).filter(([_, v]) => v.length > 1);
-        const duplicadosSet = new Set(duplicadosFiltrados.flatMap(([_, fichas]) => fichas.map(f => f.id)));
+        const duplicadosFiltrados = Object.entries(duplicados).filter(([_, v]) => v.fichas.length > 1);
+        const duplicadosSet = new Set(duplicadosFiltrados.flatMap(([_, v]) => v.fichas.map(f => f.id)));
         document.querySelectorAll('#fichasTabela tbody tr').forEach((tr, i) => {
           if (duplicadosSet.has(fichasCache[i]?.id)) {
             tr.classList.add('highlight-duplicate');
@@ -341,12 +332,9 @@
 
         const lista = document.getElementById('listaDuplicados');
         lista.innerHTML = '';
-        duplicadosFiltrados.forEach(([chave, fichas]) => {
-          const comunidades = [...new Set(fichas.map(f => f.localidade || '-'))];
-          const nomes = fichas.map(f => f.liderFamilia || '-').join(', ');
-          const cpfs = fichas.map(f => f.cpfLider || f.cpfEsposa || '-').join(', ');
+        duplicadosFiltrados.forEach(([chave, { fichas, type }], index) => {
           const li = document.createElement('li');
-          li.textContent = `${chave} - Comunidades: ${comunidades.join(', ')} - Nomes: ${nomes} - CPFs: ${cpfs}`;
+          li.textContent = `${index + 1}. ${type}: ${chave}`;
           lista.appendChild(li);
         });
       }
@@ -356,27 +344,22 @@
         container.style.display = container.style.display === 'none' ? 'block' : 'none';
       }
 
-      function promptToggleDuplicados() {
-        if (verificarSenha()) {
-          toggleDuplicados();
-        }
-      }
-
       async function excluirFicha(id) {
+        const ficha = fichasCache.find(f => f.id === id);
+        if (!ficha) return alert("Ficha não encontrada.");
+        
+        const confirmacao = window.confirm(`Tem certeza que deseja excluir a ficha de ${ficha.liderFamilia || 'desconhecido'}?`);
+        if (!confirmacao) return;
+
         try {
           await db.collection('fichas_acaoexecutada').doc(id).delete();
           fichasCache = fichasCache.filter(f => f.id !== id);
           localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(fichasCache));
           await carregarMaisFichas();
+          alert("Ficha excluída com sucesso!");
         } catch (error) {
           console.error("Erro ao excluir ficha:", error);
           alert("Erro ao excluir ficha: " + error.message);
-        }
-      }
-
-      function promptExcluirFicha(id) {
-        if (verificarSenha()) {
-          excluirFicha(id);
         }
       }
 
@@ -457,12 +440,6 @@
         }
       }
 
-      function promptImportarBackup() {
-        if (verificarSenha()) {
-          document.getElementById('inputBackup').click();
-        }
-      }
-
       function exportarBackup() {
         try {
           const data = JSON.stringify(fichasCache, null, 2);
@@ -477,12 +454,6 @@
         } catch (error) {
           console.error("Erro ao exportar backup:", error);
           alert("Erro ao exportar backup: " + error.message);
-        }
-      }
-
-      function promptExportarBackup() {
-        if (verificarSenha()) {
-          exportarBackup();
         }
       }
 
@@ -510,12 +481,6 @@
         document.getElementById('editModal').style.display = 'flex';
       }
 
-      function promptAbrirModalEditar(id) {
-        if (verificarSenha()) {
-          abrirModalEditar(id);
-        }
-      }
-
       function fecharModal() {
         document.getElementById('editModal').style.display = 'none';
         document.getElementById('editForm').reset();
@@ -523,8 +488,6 @@
 
       async function salvarEdicao(event) {
         event.preventDefault();
-        if (!verificarSenha()) return;
-
         const id = document.getElementById('editId').value;
         const updatedData = {
           liderFamilia: document.getElementById('editLiderFamilia').value || null,
@@ -624,12 +587,6 @@
         doc.save(`cadastros_${comunidadeSelecionada}_${motivoFiltro}.pdf`);
       }
 
-      function promptGerarPDF() {
-        if (verificarSenha()) {
-          gerarPDF();
-        }
-      }
-
       function gerarReciboPDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -723,12 +680,6 @@
         doc.save(`recibos_rancho_${comunidadeSelecionada}_${motivoFiltro}.pdf`);
       }
 
-      function promptGerarReciboPDF() {
-        if (verificarSenha()) {
-          gerarReciboPDF();
-        }
-      }
-
       function popularComunidades() {
         const select = document.getElementById('comunidadeSelect');
         const comunidades = [...new Set(fichasCache.map(f => f.localidade).filter(Boolean))];
@@ -750,4 +701,4 @@
     </script>
   </main>
 </body>
-    </html>
+  </html>
