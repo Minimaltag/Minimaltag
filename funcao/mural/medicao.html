@@ -142,12 +142,12 @@
 
   <script>
     const firebaseConfig = {
-    apiKey: "AIzaSyC5wHhdIZlY9txtYkN88R-67lIP5FZlFpY",
-    authDomain: "mtag-1c04d.firebaseapp.com",
-    projectId: "mtag-1c04d",
-    storageBucket: "mtag-1c04d.firebasestorage.app",
-    messagingSenderId: "487741931549",
-    appId: "1:487741931549:web:cf45afe3c7b5cda7de06f4"
+      apiKey: "AIzaSyC5wHhdIZlY9txtYkN88R-67lIP5FZlFpY",
+      authDomain: "mtag-1c04d.firebaseapp.com",
+      projectId: "mtag-1c04d",
+      storageBucket: "mtag-1c04d.firebasestorage.app",
+      messagingSenderId: "487741931549",
+      appId: "1:487741931549:web:cf45afe3c7b5cda7de06f4"
     };
 
     firebase.initializeApp(firebaseConfig);
@@ -188,8 +188,7 @@
       const diasNoMes = new Date(ano, mes + 1, 0).getDate();
 
       const dataBase = new Date(dataInicial.getFullYear(), dataInicial.getMonth(), dataInicial.getDate());
-      const inicioMes = new Date(ano, mes, 1);
-      const diffDias = Math.floor((inicioMes - dataBase) / (1000 * 60 * 60 * 24));
+      const diffDias = Math.floor((hoje - dataBase) / (1000 * 60 * 60 * 24));
       let blocoIndex = Math.floor(diffDias / repeticoesPorPessoa) % cicloMedicao.length;
 
       const titulo = document.createElement("h3");
@@ -210,7 +209,10 @@
         linha.insertCell().textContent = diaSemana;
         linha.insertCell().textContent = cicloMedicao[blocoIndex];
 
-        if (dia % repeticoesPorPessoa === 0) blocoIndex = (blocoIndex + 1) % cicloMedicao.length;
+        // Calculate the index for the current day based on continuous days
+        const currentDate = new Date(ano, mes, dia);
+        const diffFromBase = Math.floor((currentDate - dataBase) / (1000 * 60 * 60 * 24));
+        blocoIndex = Math.floor(diffFromBase / repeticoesPorPessoa) % cicloMedicao.length;
       }
 
       mural.appendChild(titulo);
@@ -283,29 +285,29 @@
             <style>
               @page {
                 size: A4;
-                margin: 15mm;
+                margin: 10mm;
               }
               body {
                 font-family: Arial, sans-serif;
                 margin: 0;
                 padding: 0;
-                width: 210mm;
-                height: 297mm;
+                width: 190mm;
+                height: 277mm;
                 box-sizing: border-box;
               }
               h3 {
                 text-align: center;
-                font-size: 14pt;
-                margin: 10mm 0;
+                font-size: 12pt;
+                margin: 5mm 0;
               }
               table {
                 width: 100%;
                 border-collapse: collapse;
-                font-size: 10pt;
+                font-size: 8pt;
               }
               th, td {
                 border: 1px solid #000;
-                padding: 4mm;
+                padding: 2mm;
                 text-align: left;
                 word-wrap: break-word;
               }
@@ -314,13 +316,13 @@
                 font-weight: bold;
               }
               td:nth-child(1) {
-                width: 15%;
+                width: 10%;
               }
               td:nth-child(2) {
-                width: 50%;
+                width: 60%;
               }
               td:nth-child(3) {
-                width: 35%;
+                width: 30%;
               }
               .passado {
                 background-color: #e0e0e0;
@@ -350,4 +352,4 @@
     protectPage();
   </script>
 </body>
-</html>
+  </html>
