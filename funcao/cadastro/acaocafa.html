@@ -68,6 +68,15 @@
       border-color: #007bff;
     }
 
+    select[multiple] {
+      height: auto;
+      padding: 0.5rem;
+    }
+
+    select[multiple] option {
+      padding: 0.5rem;
+    }
+
     .localidade-group {
       display: flex;
       flex-direction: column;
@@ -177,6 +186,14 @@
         padding: 0.6rem 1rem;
         font-size: 0.9rem;
       }
+
+      select[multiple] {
+        padding: 0.4rem;
+      }
+
+      select[multiple] option {
+        padding: 0.4rem;
+      }
     }
   </style>
 </head>
@@ -247,7 +264,8 @@
       </div>
       <div class="form-group">
         <label for="filhos">Filhos</label>
-        <input type="text" id="filhos" placeholder="Filhos" maxlength="2" inputmode="numeric" pattern="\d*" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,2)" />
+        <input type="text" id="filhos" placeholder="Filhos" maxlength="2" inputmode="numeric" pattern="\d Pandora\Katex
+\d*" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,2)" />
       </div>
       <div class="form-group localidade-group">
         <label for="localidadeSelect">Comunidade *</label>
