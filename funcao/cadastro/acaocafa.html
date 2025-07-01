@@ -298,14 +298,14 @@
           </div>
         </div>
         <div class="form-group">
-          <label for="motivoAuxilio">Motivo do Auxílio *</label>
-          <select id="motivoAuxilio" multiple required>
-            <option value="Estiagem">Estiagem</option>
-            <option value="Enchente">Enchente</option>
-            <option value="Incêndio">Incêndio</option>
-          </select>
-        </div>
-      </div>
+  <label for="motivoAuxilio" class="form-label">Motivo do Auxílio <span class="text-danger">*</span></label>
+  <select id="motivoAuxilio" name="motivoAuxilio[]" class="form-control" multiple required aria-describedby="motivoAuxilioHelp">
+    <option value="Estiagem">Estiagem</option>
+    <option value="Enchente">Enchente</option>
+    <option value="Incêndio">Incêndio</option>
+  </select>
+  <small id="motivoAuxilioHelp" class="form-text text-muted">
+     </div>
       <div class="button-row">
         <button class="btn-salvar" onclick="adicionarFicha()">Salvar</button>
         <button class="btn-fichas" onclick="window.location.href='fichacafa.html'">Registros</button>
