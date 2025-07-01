@@ -8,211 +8,174 @@
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
   <style>
-    :root {
-      --cor-primaria: #ff7f0e;
-      --cor-secundaria: #007bff;
-      --fundo-principal: #ffffff;
-      --cinza-claro: #f0f2f5;
-      --cinza-medio: #ced4da;
-      --cinza-escuro: #495057;
-      --sombra-leve: rgba(0, 0, 0, 0.08);
-      --sombra-media: rgba(0, 0, 0, 0.15);
-      --cor-valido: #28a745;
-      --cor-invalido: #dc3545;
-    }
-
     * {
+      margin: 0;
+      padding: 0;
       box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
 
     body {
-      font-family: 'Poppins', sans-serif;
-      background-color: var(--fundo-principal);
-      margin: 0;
-      padding: 0;
-      line-height: 1.6;
-      color: var(--cinza-escuro);
+      background: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 1rem;
     }
 
     header {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-top: 60px;
-      margin-bottom: 40px;
-      position: relative;
+      margin-bottom: 1rem;
     }
 
-    header h1 {
-      font-size: 2.8rem;
-      color: var(--cor-primaria);
-      font-weight: 700;
-      letter-spacing: -0.5px;
-      margin: 0;
+    h1 {
+      font-size: 1.5rem;
+      color: #333;
       text-align: center;
     }
 
-    .form-section {
-      max-width: 800px;
-      background-color: white;
-      margin: 20px auto;
-      padding: 40px;
-      border-radius: 15px;
-      box-shadow: 0 10px 30px var(--sombra-media);
-      border-top: 5px solid var(--cor-primaria);
-    }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr; /* Single column for all screen sizes */
-      gap: 25px;
+    main {
+      width: 100%;
+      max-width: 500px;
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
     .form-group {
       display: flex;
       flex-direction: column;
+      margin-bottom: 1rem;
     }
 
-    .form-group label {
-      margin-bottom: 8px;
-      font-weight: 500;
-      color: var(--cinza-escuro);
-      font-size: 0.95rem;
+    label {
+      font-size: 0.9rem;
+      color: #555;
+      margin-bottom: 0.3rem;
     }
 
-    input,
-    select {
-      padding: 14px;
-      font-size: 1.05rem;
-      border-radius: 8px;
-      border: 1px solid var(--cinza-medio);
-      width: 100%;
-      transition: all 0.3s ease;
-      background-color: #fdfdfd;
+    input, select {
+      padding: 0.8rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+      transition: border-color 0.2s;
     }
 
-    input:focus,
-    select:focus {
-      border-color: var(--cor-primaria);
-      box-shadow: 0 0 0 3px rgba(255, 127, 14, 0.25);
+    input:focus, select:focus {
       outline: none;
-    }
-
-    #motivoAuxilio {
-      padding: 10px;
-      line-height: 1.5;
-      overflow-y: hidden; /* Remove barra de rolagem */
-    }
-
-    .cpf-feedback {
-      font-size: 0.85rem;
-      margin-top: 5px;
-      height: 20px;
-    }
-
-    .cpf-valido {
-      color: var(--cor-valido);
-    }
-
-    .cpf-invalido {
-      color: var(--cor-invalido);
+      border-color: #007bff;
     }
 
     .localidade-group {
       display: flex;
-      gap: 8px;
-      align-items: flex-end;
+      flex-direction: column;
+      margin-bottom: 1rem;
     }
 
-    .localidade-group select {
-      flex: 1.5;
+    .localidade-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
     }
 
-    .localidade-group input {
-      flex: 2;
+    .localidade-container select {
+      width: 100%;
     }
 
-    .localidade-group button {
-      padding: 10px 16px;
-      font-size: 0.9rem;
-      font-weight: 600;
+    .localidade-container .add-community {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .localidade-container input {
+      flex: 1;
+    }
+
+    .localidade-container button {
+      padding: 0.8rem;
+      background: #007bff;
       color: #fff;
-      background-color: var(--cor-primaria);
       border: none;
-      border-radius: 8px;
+      border-radius: 4px;
       cursor: pointer;
-      transition: all 0.3s ease;
-      flex: 0.8;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+      width: 100px;
     }
 
-    .localidade-group button:hover {
-      background-color: var(--cor-secundaria);
-      transform: translateY(-2px);
+    .localidade-container button:hover {
+      background: #0056b3;
+    }
+
+    .cpf-feedback {
+      font-size: 0.8rem;
+      margin-top: 0.3rem;
+    }
+
+    .cpf-valido {
+      color: #28a745;
+    }
+
+    .cpf-invalido {
+      color: #dc3545;
     }
 
     .button-row {
       display: flex;
-      justify-content: space-between;
-      margin-top: 30px;
-      flex-wrap: wrap;
-      gap: 10px;
+      gap: 0.5rem;
+      justify-content: center;
     }
 
-    button {
-      padding: 14px 25px;
-      font-size: 1.05rem;
-      font-weight: 600;
-      color: #fff;
-      background-color: var(--cor-primaria);
+    .btn-salvar, .btn-fichas {
+      padding: 0.8rem 1.5rem;
       border: none;
-      border-radius: 8px;
+      border-radius: 4px;
       cursor: pointer;
-      box-shadow: 0 5px 15px var(--sombra-leve);
-      transition: all 0.3s ease;
-    }
-
-    button:hover {
-      background-color: var(--cor-secundaria);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px var(--sombra-media);
+      font-size: 1rem;
+      transition: background 0.2s;
     }
 
     .btn-salvar {
-      background-color: var(--cor-primaria);
+      background: #007bff;
+      color: #fff;
+    }
+
+    .btn-salvar:hover {
+      background: #0056b3;
     }
 
     .btn-fichas {
-      background-color: var(--cor-secundaria);
+      background: #6c757d;
+      color: #fff;
     }
 
-    @media (max-width: 768px) {
-      .form-section {
-        margin: 20px 15px;
-        padding: 30px 20px;
+    .btn-fichas:hover {
+      background: #5a6268;
+    }
+
+    @media (max-width: 600px) {
+      main {
+        padding: 1rem;
       }
 
-      header h1 {
-        font-size: 2.2rem;
+      h1 {
+        font-size: 1.2rem;
       }
 
-      .button-row {
-        flex-direction: column;
-        align-items: stretch;
+      input, select, .localidade-container button {
+        font-size: 0.9rem;
+        padding: 0.6rem;
       }
 
-      button {
-        width: 100%;
+      .localidade-container button {
+        width: 80px;
       }
 
-      .localidade-group {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .localidade-group select,
-      .localidade-group input,
-      .localidade-group button {
-        width: 100%;
+      .btn-salvar, .btn-fichas {
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
       }
     }
   </style>
@@ -232,80 +195,80 @@
   </header>
   <main>
     <div class="form-section">
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="liderFamilia">Líder de Família *</label>
-          <input type="text" id="liderFamilia" placeholder="Líder de Família" required />
-        </div>
-        <div class="form-group">
-          <label for="cpfLider">CPF do Líder *</label>
-          <input type="text" id="cpfLider" placeholder="CPF do Líder" maxlength="14" inputmode="numeric" pattern="\d*" oninput="mascaraCPF(this)" required />
-          <div id="cpfLiderFeedback" class="cpf-feedback"></div>
-        </div>
-        <div class="form-group">
-          <label for="numeroContato">Telefone de Contato</label>
-          <input type="text" id="numeroContato" placeholder="Telefone de Contato" maxlength="15" inputmode="numeric" pattern="\d*" oninput="mascaraTelefone(this)" />
-        </div>
-        <div class="form-group">
-          <label for="dataNascimentoLider">Data de Nascimento (dd/mm/aaaa)</label>
-          <input type="text" id="dataNascimentoLider" placeholder="Data de Nascimento (dd/mm/aaaa)" maxlength="10" inputmode="numeric" oninput="mascaraData(this)" />
-        </div>
-        <div class="form-group">
-          <label for="tituloEleitorLider">Título de Eleitor do Líder</label>
-          <input type="text" id="tituloEleitorLider" placeholder="Título de Eleitor do Líder" maxlength="14" inputmode="numeric" pattern="\d*" oninput="mascaraTitulo(this)" />
-        </div>
-        <div class="form-group">
-          <label for="zonaLider">Zona do Líder</label>
-          <input type="text" id="zonaLider" placeholder="Zona do Líder" maxlength="4" inputmode="numeric" pattern="\d*" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,4)" />
-        </div>
-        <div class="form-group">
-          <label for="secaoLider">Seção do Líder</label>
-          <input type="text" id="secaoLider" placeholder="Seção do Líder" maxlength="4" inputmode="numeric" pattern="\d*" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,4)" />
-        </div>
-        <div class="form-group">
-          <label for="nomeEsposa">Nome do(a) Cônjuge</label>
-          <input type="text" id="nomeEsposa" placeholder="Nome do(a) Cônjuge" />
-        </div>
-        <div class="form-group">
-          <label for="cpfEsposa">CPF do(a) Cônjuge</label>
-          <input type="text" id="cpfEsposa" placeholder="CPF do(a) Cônjuge" maxlength="14" inputmode="numeric" pattern="\d*" oninput="mascaraCPF(this)" />
-          <div id="cpfEsposaFeedback" class="cpf-feedback"></div>
-        </div>
-        <div class="form-group">
-          <label for="tituloEleitorEsposa">Título de Eleitor do(a) Cônjuge</label>
-          <input type="text" id="tituloEleitorEsposa" placeholder="Título de Eleitor do(a) Cônjuge" maxlength="14" inputmode="numeric" pattern="\d*" oninput="mascaraTitulo(this)" />
-        </div>
-        <div class="form-group">
-          <label for="zonaEsposa">Zona do(a) Cônjuge</label>
-          <input type="text" id="zonaEsposa" placeholder="Zona do(a) Cônjuge" maxlength="4" inputmode="numeric" pattern="\d*" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,4)" />
-        </div>
-        <div class="form-group">
-          <label for="secaoEsposa">Seção do(a) Cônjuge</label>
-          <input type="text" id="secaoEsposa" placeholder="Seção do(a) Cônjuge" maxlength="4" inputmode="numeric" pattern="\d*" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,4)" />
-        </div>
-        <div class="form-group">
-          <label for="filhos">Filhos</label>
-          <input type="text" id="filhos" placeholder="Filhos" maxlength="2" inputmode="numeric" pattern="\d*" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,2)" />
-        </div>
-        <div class="form-group localidade-group">
-          <label for="localidadeSelect">Comunidade *</label>
-          <div style="display: flex; gap: 8px;">
-            <select id="localidadeSelect" required>
-              <option value="">Selecione uma comunidade</option>
-            </select>
+      <div class="form-group">
+        <label for="liderFamilia">Líder de Família *</label>
+        <input type="text" id="liderFamilia" placeholder="Líder de Família" required />
+      </div>
+      <div class="form-group">
+        <label for="cpfLider">CPF do Líder *</label>
+        <input type="text" id="cpfLider" placeholder="CPF do Líder" maxlength="14" inputmode="numeric" pattern="\d*" oninput="mascaraCPF(this)" required />
+        <div id="cpfLiderFeedback" class="cpf-feedback"></div>
+      </div>
+      <div class="form-group">
+        <label for="numeroContato">Telefone de Contato</label>
+        <input type="text" id="numeroContato" placeholder="Telefone de Contato" maxlength="15" inputmode="numeric" pattern="\d*" oninput="mascaraTelefone(this)" />
+      </div>
+      <div class="form-group">
+        <label for="dataNascimentoLider">Data de Nascimento</label>
+        <input type="text" id="dataNascimentoLider" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric" oninput="mascaraData(this)" />
+      </div>
+      <div class="form-group">
+        <label for="tituloEleitorLider">Título de Eleitor do Líder</label>
+        <input type="text" id="tituloEleitorLider" placeholder="Título de Eleitor" maxlength="14" inputmode="numeric" pattern="\d*" oninput="mascaraTitulo(this)" />
+      </div>
+      <div class="form-group">
+        <label for="zonaLider">Zona do Líder</label>
+        <input type="text" id="zonaLider" placeholder="Zona" maxlength="4" inputmode="numeric" pattern="\d*" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,4)" />
+      </div>
+      <div class="form-group">
+        <label for="secaoLider">Seção do Líder</label>
+        <input type="text" id="secaoLider" placeholder="Seção" maxlength="4" inputmode="numeric" pattern="\d*" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,4)" />
+      </div>
+      <div class="form-group">
+        <label for="nomeEsposa">Nome do(a) Cônjuge</label>
+        <input type="text" id="nomeEsposa" placeholder="Nome do(a) Cônjuge" />
+      </div>
+      <div class="form-group">
+        <label for="cpfEsposa">CPF do(a) Cônjuge</label>
+        <input type="text" id="cpfEsposa" placeholder="CPF do(a) Cônjuge" maxlength="14" inputmode="numeric" pattern="\d*" oninput="mascaraCPF(this)" />
+        <div id="cpfEsposaFeedback" class="cpf-feedback"></div>
+      </div>
+      <div class="form-group">
+        <label for="tituloEleitorEsposa">Título de Eleitor do(a) Cônjuge</label>
+        <input type="text" id="tituloEleitorEsposa" placeholder="Título de Eleitor" maxlength="14" inputmode="numeric" pattern="\d*" oninput="mascaraTitulo(this)" />
+      </div>
+      <div class="form-group">
+        <label for="zonaEsposa">Zona do(a) Cônjuge</label>
+        <input type="text" id="zonaEsposa" placeholder="Zona" maxlength="4" inputmode="numeric" pattern="\d*" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,4)" />
+      </div>
+      <div class="form-group">
+        <label for="secaoEsposa">Seção do(a) Cônjuge</label>
+        <input type="text" id="secaoEsposa" placeholder="Seção" maxlength="4" inputmode="numeric" pattern="\d*" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,4)" />
+      </div>
+      <div class="form-group">
+        <label for="filhos">Filhos</label>
+        <input type="text" id="filhos" placeholder="Filhos" maxlength="2" inputmode="numeric" pattern="\d*" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,2)" />
+      </div>
+      <div class="form-group localidade-group">
+        <label for="localidadeSelect">Comunidade *</label>
+        <div class="localidade-container">
+          <select id="localidadeSelect" required>
+            <option value="">Selecione uma comunidade</option>
+          </select>
+          <div class="add-community">
             <input type="text" id="novaLocalidade" placeholder="Nova comunidade" />
             <button onclick="adicionarLocalidade()">Adicionar</button>
           </div>
         </div>
-        <div class="form-group">
-  <label for="motivoAuxilio" class="form-label">Motivo do Auxílio <span class="text-danger">*</span></label>
-  <select id="motivoAuxilio" name="motivoAuxilio[]" class="form-control" multiple required aria-describedby="motivoAuxilioHelp">
-    <option value="Estiagem">Estiagem</option>
-    <option value="Enchente">Enchente</option>
-    <option value="Incêndio">Incêndio</option>
-  </select>
-  <small id="motivoAuxilioHelp" class="form-text text-muted">
-     </div>
+      </div>
+      <div class="form-group">
+        <label for="motivoAuxilio">Motivo do Auxílio *</label>
+        <select id="motivoAuxilio" multiple required>
+          <option value="Estiagem">Estiagem</option>
+          <option value="Enchente">Enchente</option>
+          <option value="Incêndio">Incêndio</option>
+        </select>
+      </div>
       <div class="button-row">
         <button class="btn-salvar" onclick="adicionarFicha()">Salvar</button>
         <button class="btn-fichas" onclick="window.location.href='fichacafa.html'">Registros</button>
@@ -324,7 +287,6 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Função para ajustar dinamicamente a altura do select multiple
     function ajustarTamanhoSelect() {
       const motivoAuxilio = document.getElementById('motivoAuxilio');
       const numOpcoes = motivoAuxilio.options.length;
@@ -357,7 +319,7 @@
 
     window.onload = () => {
       carregarLocalidades();
-      ajustarTamanhoSelect(); // Ajusta o tamanho do select ao carregar a página
+      ajustarTamanhoSelect();
     };
 
     function mascaraCPF(input) {
@@ -500,7 +462,7 @@
         document.getElementById("motivoAuxilio").selectedIndex = -1;
         document.getElementById("cpfLiderFeedback").textContent = '';
         document.getElementById("cpfEsposaFeedback").textContent = '';
-        ajustarTamanhoSelect(); // Reajusta o tamanho do select após limpar
+        ajustarTamanhoSelect();
       } catch (error) {
         console.error('Erro ao salvar ficha:', error);
         alert('Erro ao salvar ficha. Veja o console para mais detalhes.');
@@ -508,4 +470,4 @@
     }
   </script>
 </body>
-                                                                                          </html>
+  </html>
