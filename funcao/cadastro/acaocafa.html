@@ -98,6 +98,12 @@
       outline: none;
     }
 
+    #motivoAuxilio {
+      padding: 10px;
+      line-height: 1.5;
+      overflow-y: hidden; /* Remove barra de rolagem */
+    }
+
     .cpf-feedback {
       font-size: 0.85rem;
       margin-top: 5px;
@@ -322,6 +328,13 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
+    // Função para ajustar dinamicamente a altura do select multiple
+    function ajustarTamanhoSelect() {
+      const motivoAuxilio = document.getElementById('motivoAuxilio');
+      const numOpcoes = motivoAuxilio.options.length;
+      motivoAuxilio.setAttribute('size', numOpcoes);
+    }
+
     async function carregarLocalidades() {
       const select = document.getElementById("localidadeSelect");
       select.innerHTML = `<option value="">Selecione uma comunidade</option>`;
@@ -346,7 +359,10 @@
       carregarLocalidades();
     }
 
-    window.onload = carregarLocalidades;
+    window.onload = () => {
+      carregarLocalidades();
+      ajustarTamanhoSelect(); // Ajusta o tamanho do select ao carregar a página
+    };
 
     function mascaraCPF(input) {
       let v = input.value.replace(/\D/g, "").slice(0, 11);
@@ -402,7 +418,7 @@
     function validarCPFRealTime(input) {
       const cpf = input.value;
       const feedbackElement = document.getElementById(input.id + 'Feedback');
-      if (cpf.length === 14) { // Complete CPF format: XXX.XXX.XXX-XX
+      if (cpf.length === 14) {
         if (validarCPF(cpf)) {
           feedbackElement.textContent = 'CPF válido';
           feedbackElement.className = 'cpf-feedback cpf-valido';
@@ -416,7 +432,6 @@
       }
     }
 
-    // Handle Enter key to move to next input
     document.querySelectorAll('input, select').forEach((element, index, elements) => {
       element.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
@@ -425,7 +440,6 @@
           if (nextElement) {
             nextElement.focus();
           } else {
-            // If last input, focus on the save button
             document.querySelector('.btn-salvar').focus();
           }
         }
@@ -490,6 +504,7 @@
         document.getElementById("motivoAuxilio").selectedIndex = -1;
         document.getElementById("cpfLiderFeedback").textContent = '';
         document.getElementById("cpfEsposaFeedback").textContent = '';
+        ajustarTamanhoSelect(); // Reajusta o tamanho do select após limpar
       } catch (error) {
         console.error('Erro ao salvar ficha:', error);
         alert('Erro ao salvar ficha. Veja o console para mais detalhes.');
@@ -497,4 +512,4 @@
     }
   </script>
 </body>
-</html>
+  </html>
