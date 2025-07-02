@@ -266,23 +266,22 @@
         </div>
       </div>
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
-<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-
-<div class="form-group localidade-group full-width">
-  <label for="motivoAuxilio">Motivo do Auxílio *</label>
-  <select id="motivoAuxilio" multiple required>
-    <option value="Estiagem">Estiagem</option>
-    <option value="Enchente">Enchente</option>
-    <option value="Incêndio">Incêndio</option>
-  </select>
-</div>
-<script>
-  new Choices('#motivoAuxilio', {
-    removeItemButton: true,
-    placeholderValue: 'Selecione os motivos',
-    searchEnabled: false
-  });
-</script>
+      <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+      <div class="form-group localidade-group full-width">
+        <label for="motivoAuxilio">Motivo do Auxílio *</label>
+        <select id="motivoAuxilio" multiple required>
+          <option value="Estiagem">Estiagem</option>
+          <option value="Enchente">Enchente</option>
+          <option value="Incêndio">Incêndio</option>
+        </select>
+      </div>
+      <script>
+        const motivoAuxilioChoices = new Choices('#motivoAuxilio', {
+          removeItemButton: true,
+          placeholderValue: 'Selecione os motivos',
+          searchEnabled: false
+        });
+      </script>
       <div class="button-row">
         <button class="btn-salvar" onclick="adicionarFicha()">Salvar</button>
         <button class="btn-fichas" onclick="window.location.href='fichacafa.html'">Registros</button>
@@ -471,9 +470,18 @@
         });
 
         alert('Ficha salva com sucesso!');
+        // Clear all input fields
         document.querySelectorAll("input").forEach(el => el.value = '');
+        // Clear localidade select
         document.getElementById("localidadeSelect").value = "";
-        document.getElementById("motivoAuxilio").selectedIndex = -1;
+        // Clear motivoAuxilio using Choices.js API
+        motivoAuxilioChoices.clearStore();
+        motivoAuxilioChoices.setChoices([
+          { value: 'Estiagem', label: 'Estiagem' },
+          { value: 'Enchente', label: 'Enchente' },
+          { value: 'Incêndio', label: 'Incêndio' }
+        ], 'value', 'label', false);
+        // Clear CPF feedback messages
         document.getElementById("cpfLiderFeedback").textContent = '';
         document.getElementById("cpfEsposaFeedback").textContent = '';
         ajustarTamanhoSelect();
@@ -484,4 +492,4 @@
     }
   </script>
 </body>
-</html>
+                                                </html>
