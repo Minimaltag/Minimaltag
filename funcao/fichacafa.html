@@ -2,15 +2,284 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Famílias Cadastradas</title>
-  <link rel="stylesheet" href="fichacafa.css">
   <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background: #f5f5f5;
+      color: #333;
+      font-size: 14px;
+      line-height: 1.4;
+      padding: 10px;
+    }
+
+    header {
+      text-align: center;
+      padding: 10px 0;
+      background: #fff;
+      border-bottom: 1px solid #ddd;
+      margin-bottom: 10px;
+    }
+
+    header h1 {
+      font-size: 1.5em;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .fichas-section {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      padding: 10px;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .controls span, .controls select, .controls button, .controls input {
+      font-size: 0.85em;
+      padding: 6px 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: #fff;
+      transition: all 0.2s;
+    }
+
+    .controls select, .controls button {
+      cursor: pointer;
+    }
+
+    .controls button:hover {
+      background: #007bff;
+      color: #fff;
+      border-color: #007bff;
+    }
+
+    .controls button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      border-color: #ccc;
+    }
+
+    .search-container {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 10px;
+    }
+
+    .search-container input {
+      flex: 1;
+      padding: 6px 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 0.85em;
+    }
+
+    .search-container button {
+      padding: 6px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    .search-container button:hover {
+      background: #007bff;
+      color: #fff;
+    }
+
+    #fichasContainer {
+      overflow-x: auto;
+    }
+
+    #fichasTabela {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8em;
+    }
+
+    #fichasTabela th, #fichasTabela td {
+      padding: 6px 8px;
+      border: 1px solid #eee;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    #fichasTabela th {
+      background: #f8f9fa;
+      font-weight: 600;
+      color: #333;
+    }
+
+    #fichasTabela tbody tr:hover {
+      background: #f1f3f5;
+    }
+
+    #fichasTabela .highlight-duplicate {
+      background: #fff3cd;
+    }
+
+    #duplicadosContainer {
+      display: none;
+      margin-top: 10px;
+      padding: 10px;
+      background: #fff3cd;
+      border-radius: 4px;
+    }
+
+    #duplicadosContainer h3 {
+      font-size: 1em;
+      margin-bottom: 5px;
+    }
+
+    #duplicadosContainer ul {
+      list-style: none;
+      font-size: 0.85em;
+    }
+
+    #duplicadosContainer li {
+      margin-bottom: 3px;
+    }
+
+    .editar, .excluir {
+      padding: 4px 8px;
+      margin-right: 5px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8em;
+    }
+
+    .editar {
+      background: #28a745;
+      color: #fff;
+    }
+
+    .excluir {
+      background: #dc3545;
+      color: #fff;
+    }
+
+    .editar:hover {
+      background: #218838;
+    }
+
+    .excluir:hover {
+      background: #c82333;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      width: 400px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal-content h2 {
+      font-size: 1.2em;
+      margin-bottom: 10px;
+    }
+
+    .modal-content form {
+      display: grid;
+      gap: 8px;
+    }
+
+    .modal-content label {
+      font-size: 0.85em;
+      font-weight: 500;
+    }
+
+    .modal-content input, .modal-content textarea {
+      width: 100%;
+      padding: 6px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 0.85em;
+    }
+
+    .modal-content textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    .modal-content button {
+      padding: 6px 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.85em;
+    }
+
+    .modal-content button[type="submit"] {
+      background: #007bff;
+      color: #fff;
+    }
+
+    .modal-content button.cancelar {
+      background: #6c757d;
+      color: #fff;
+    }
+
+    .modal-content button:hover {
+      opacity: 0.9;
+    }
+
+    #loadingSpinner {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 40px;
+      height: 40px;
+      border: 4px solid #007bff;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      z-index: 1001;
+    }
+
+    @keyframes spin {
+      to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
   <script type="module">
@@ -43,8 +312,8 @@
         <button onclick="gerarPDF()">Gerar PDF</button>
         <button onclick="gerarReciboPDF()">Gerar Recibo PDF</button>
         <input type="file" id="inputBackup" accept=".json" style="display: none;" />
-        <button onclick="document.getElementById('inputBackup').click()">Importar Backup JSON</button>
-        <button onclick="exportarBackup()">Exportar Backup JSON</button>
+        <button onclick="document.getElementById('inputBackup').click()">Importar Backup</button>
+        <button onclick="exportarBackup()">Exportar Backup</button>
         <button onclick="toggleDuplicados()">Ver Duplicados</button>
         <button id="atualizarButton" class="atualizar" onclick="atualizarDados()">Atualizar</button>
       </div>
@@ -55,7 +324,7 @@
       </div>
 
       <div class="search-container">
-        <input type="text" id="buscaInput" placeholder="Buscar ficha (mínimo 4 caracteres)..." onkeyup="if(event.key === 'Enter') { buscarFicha(); }" />
+        <input type="text" id="buscaInput" placeholder="Buscar ficha (mín. 4 caracteres)..." onkeyup="if(event.key === 'Enter') { buscarFicha(); }" />
         <button class="search-btn" onclick="buscarFicha()" title="Buscar"><i class="fas fa-search"></i></button>
         <button class="clear-search" onclick="limparBusca()" title="Limpar"><i class="fas fa-broom"></i></button>
       </div>
@@ -66,19 +335,19 @@
             <tr>
               <th>Líder de Família</th>
               <th>CPF do Líder</th>
-              <th>Telefone de Contato</th>
-              <th>Data de Nascimento do Líder</th>
-              <th>Título de Eleitor do Líder</th>
-              <th>Zona do Líder</th>
-              <th>Seção do Líder</th>
-              <th>Nome do(a) Cônjuge</th>
-              <th>CPF do(a) Cônjuge</th>
-              <th>Título de Eleitor do(a) Cônjuge</th>
-              <th>Zona do(a) Cônjuge</th>
-              <th>Seção do(a) Cônjuge</th>
+              <th>Telefone</th>
+              <th>Nasc. Líder</th>
+              <th>Título Líder</th>
+              <th>Zona Líder</th>
+              <th>Seção Líder</th>
+              <th>Cônjuge</th>
+              <th>CPF Cônjuge</th>
+              <th>Título Cônj.</th>
+              <th>Zona Cônj.</th>
+              <th>Seção Cônj.</th>
               <th>Filhos</th>
               <th>Localidade</th>
-              <th>Motivo do Auxílio</th>
+              <th>Motivo Auxílio</th>
               <th>Ações</th>
             </tr>
           </thead>
@@ -87,7 +356,6 @@
       </div>
     </div>
 
-    <!-- Modal para Edição -->
     <div id="editModal" class="modal">
       <div class="modal-content">
         <h2>Editar Ficha</h2>
@@ -98,34 +366,34 @@
           <label for="editCpfLider">CPF do Líder</label>
           <input type="text" id="editCpfLider" name="cpfLider" />
           
-          <label for="editNumeroContato">Telefone de Contato</label>
+          <label for="editNumeroContato">Telefone</label>
           <input type="text" id="editNumeroContato" name="numeroContato" />
           
-          <label for="editDataNascimentoLider">Data de Nascimento do Líder</label>
+          <label for="editDataNascimentoLider">Data Nasc. Líder</label>
           <input type="text" id="editDataNascimentoLider" name="dataNascimentoLider" placeholder="DD/MM/AAAA" />
           
-          <label for="editTituloEleitorLider">Título de Eleitor do Líder</label>
+          <label for="editTituloEleitorLider">Título Eleitor Líder</label>
           <input type="text" id="editTituloEleitorLider" name="tituloEleitorLider" />
           
-          <label for="editZonaLider">Zona do Líder</label>
+          <label for="editZonaLider">Zona Líder</label>
           <input type="text" id="editZonaLider" name="zonaLider" />
           
-          <label for="editSecaoLider">Seção do Líder</label>
+          <label for="editSecaoLider">Seção Líder</label>
           <input type="text" id="editSecaoLider" name="secaoLider" />
           
-          <label for="editNomeEsposa">Nome do(a) Cônjuge</label>
+          <label for="editNomeEsposa">Cônjuge</label>
           <input type="text" id="editNomeEsposa" name="nomeEsposa" />
           
-          <label for="editCpfEsposa">CPF do(a) Cônjuge</label>
+          <label for="editCpfEsposa">CPF Cônjuge</label>
           <input type="text" id="editCpfEsposa" name="cpfEsposa" />
           
-          <label for="editTituloEleitorEsposa">Título de Eleitor do(a) Cônjuge</label>
+          <label for="editTituloEleitorEsposa">Título Eleitor Cônj.</label>
           <input type="text" id="editTituloEleitorEsposa" name="tituloEleitorEsposa" />
           
-          <label for="editZonaEsposa">Zona do(a) Cônjuge</label>
+          <label for="editZonaEsposa">Zona Cônjuge</label>
           <input type="text" id="editZonaEsposa" name="zonaEsposa" />
           
-          <label for="editSecaoEsposa">Seção do(a) Cônjuge</label>
+          <label for="editSecaoEsposa">Seção Cônjuge</label>
           <input type="text" id="editSecaoEsposa" name="secaoEsposa" />
           
           <label for="editFilhos">Filhos</label>
@@ -161,7 +429,7 @@
       const LOCAL_STORAGE_KEY = 'fichasCache';
       const LAST_UPDATE_KEY = 'lastUpdateTimestamp';
       const COOLDOWN_MINUTES = 240;
-      const COOLDOWN_MS = COOLDOWN_MINUTES * 60 * 1000; // 240 minutos em milissegundos
+      const COOLDOWN_MS = COOLDOWN_MINUTES * 60 * 1000;
 
       function atualizarEstadoBotao() {
         const atualizarButton = document.getElementById('atualizarButton');
@@ -701,4 +969,4 @@
     </script>
   </main>
 </body>
-</html>
+  </html>
