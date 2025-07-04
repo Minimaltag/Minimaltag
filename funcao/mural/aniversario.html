@@ -30,6 +30,14 @@
       text-align: center;
     }
 
+    h2 {
+      color: #2d3748;
+      font-size: 1.8rem;
+      font-weight: 500;
+      margin: 20px 0;
+      text-align: center;
+    }
+
     .container {
       width: 100%;
       max-width: 1000px;
@@ -92,17 +100,17 @@
       padding: 8px 16px;
       font-size: 0.85rem;
       font-weight: 500;
-      background-color: #4a5568; /* Cor mais neutra e discreta */
+      background-color: #4a5568;
       color: #e2e8f0;
       border: none;
       border-radius: 6px;
       cursor: pointer;
       transition: background-color 0.3s ease;
-      opacity: 0.8; /* Reduz opacidade para maior discrição */
+      opacity: 0.8;
     }
 
     .admin-btn:hover {
-      background-color: #5a6a82; /* Tom mais claro no hover */
+      background-color: #5a6a82;
       opacity: 0.9;
     }
 
@@ -120,8 +128,35 @@
       z-index: 1000;
     }
 
+    .lunar-calendar {
+      width: 100%;
+      max-width: 1000px;
+      background-color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .lunar-calendar ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .lunar-calendar li {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #e2e8f0;
+      color: #4a5568;
+    }
+
+    .lunar-calendar li:last-child {
+      border-bottom: none;
+    }
+
     @media (max-width: 600px) {
-      .container {
+      .container, .lunar-calendar {
         padding: 15px;
       }
 
@@ -167,6 +202,10 @@
       h1 {
         font-size: 1.8rem;
       }
+
+      h2 {
+        font-size: 1.5rem;
+      }
     }
   </style>
 </head>
@@ -189,10 +228,18 @@
         <tr>
           <th>Nome</th>
           <th>Data de Nascimento</th>
+          <th>Signo</th>
+          <th>Dias para o Próximo Aniversário</th>
+          <th>Dias Vividos</th>
+          <th>Idade Atual</th>
         </tr>
       </thead>
       <tbody></tbody>
     </table>
+  </div>
+  <h2>Calendário Lunar</h2>
+  <div class="lunar-calendar" id="lunarCalendar">
+    <ul id="lunarPhases"></ul>
   </div>
   <button class="admin-btn" onclick="openAdminPanel()">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
@@ -208,12 +255,12 @@
 
   <script>
     const firebaseConfig = {
-    apiKey: "AIzaSyC5wHhdIZlY9txtYkN88R-67lIP5FZlFpY",
-    authDomain: "mtag-1c04d.firebaseapp.com",
-    projectId: "mtag-1c04d",
-    storageBucket: "mtag-1c04d.firebasestorage.app",
-    messagingSenderId: "487741931549",
-    appId: "1:487741931549:web:cf45afe3c7b5cda7de06f4"
+      apiKey: "AIzaSyC5wHhdIZlY9txtYkN88R-67lIP5FZlFpY",
+      authDomain: "mtag-1c04d.firebaseapp.com",
+      projectId: "mtag-1c04d",
+      storageBucket: "mtag-1c04d.firebasestorage.app",
+      messagingSenderId: "487741931549",
+      appId: "1:487741931549:web:cf45afe3c7b5cda7de06f4"
     };
 
     firebase.initializeApp(firebaseConfig);
@@ -233,6 +280,54 @@
       return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
 
+    function getZodiacSign(day, month) {
+      if ((month == 3 && day >= 21) || (month == 4 && day <= 19)) return "Áries";
+      if ((month == 4 && day >= 20) || (month == 5 && day <= 20)) return "Touro";
+      if ((month == 5 && day >= 21) || (month == 6 && day <= 20)) return "Gêmeos";
+      if ((month == 6 && day >= 21) || (month == 7 && day <= 22)) return "Câncer";
+      if ((month == 7 && day >= 23) || (month == 8 && day <= 22)) return "Leão";
+      if ((month == 8 && day >= 23) || (month == 9 && day <= 22)) return "Virgem";
+      if ((month == 9 && day >= 23) || (month == 10 && day <= 22)) return "Libra";
+      if ((month == 10 && day >= 23) || (month == 11 && day <= 21)) return "Escorpião";
+      if ((month == 11 && day >= 22) || (month == 12 && day <= 21)) return "Sagitário";
+      if ((month == 12 && day >= 22) || (month == 1 && day <= 19)) return "Capricórnio";
+      if ((month == 1 && day >= 20) || (month == 2 && day <= 18)) return "Aquário";
+      if ((month == 2 && day >= 19) || (month == 3 && day <= 20)) return "Peixes";
+      return "Desconhecido";
+    }
+
+    function getDaysUntilNextBirthday(day, month) {
+      const today = new Date();
+      const currentYear = today.getFullYear();
+      const birthdayThisYear = new Date(currentYear, month - 1, day);
+      let nextBirthday = birthdayThisYear;
+      if (birthdayThisYear < today) {
+        nextBirthday = new Date(currentYear + 1, month - 1, day);
+      }
+      const diffTime = nextBirthday - today;
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    }
+
+    function getDaysLived(birthDateStr) {
+      const [day, month, year] = birthDateStr.split("/").map(Number);
+      const birthDate = new Date(year, month - 1, day);
+      const today = new Date();
+      const diffTime = today - birthDate;
+      return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    }
+
+    function getCurrentAge(birthDateStr) {
+      const [day, month, year] = birthDateStr.split("/").map(Number);
+      const birthDate = new Date(year, month - 1, day);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      return age;
+    }
+
     async function renderTable() {
       const tableBody = document.querySelector("#birthdayTable tbody");
       let data = await getAllData();
@@ -247,12 +342,17 @@
       const nextBirthdayIndex = getNextBirthdayIndex(data);
 
       data.forEach((item, index) => {
-        const [day, month] = item.data.split("/").map(Number);
+        const [day, month, year] = item.data.split("/").map(Number);
         const thisYearBirthday = new Date(today.getFullYear(), month - 1, day).setHours(0,0,0,0);
 
         const isToday = (todayDay === day && todayMonth === month);
         const isPast = thisYearBirthday < todayDate;
         const isNext = index === nextBirthdayIndex;
+
+        const zodiacSign = getZodiacSign(day, month);
+        const daysUntilNext = getDaysUntilNextBirthday(day, month);
+        const daysLived = getDaysLived(item.data);
+        const currentAge = getCurrentAge(item.data);
 
         const tr = document.createElement("tr");
         if (isNext) tr.classList.add("highlight-next");
@@ -261,6 +361,10 @@
         tr.innerHTML = `
           <td data-label="Nome">${item.nome}</td>
           <td data-label="Data de Nascimento">${item.data}</td>
+          <td data-label="Signo">${zodiacSign}</td>
+          <td data-label="Dias para o Próximo Aniversário">${daysUntilNext}</td>
+          <td data-label="Dias Vividos">${daysLived}</td>
+          <td data-label="Idade Atual">${currentAge}</td>
         `;
         tableBody.appendChild(tr);
 
@@ -281,6 +385,46 @@
 
       upcoming.sort((a, b) => a.timeDiff - b.timeDiff);
       return upcoming[0]?.index ?? -1;
+    }
+
+    function renderLunarCalendar() {
+      const lunarPhasesList = document.getElementById("lunarPhases");
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = today.getMonth();
+      const monthName = today.toLocaleString('pt-BR', { month: 'long' });
+      lunarPhasesList.innerHTML = `<li><strong>Fases da Lua em ${monthName} ${year}</strong></li>`;
+
+      const lunarCycle = 29.530588; // Ciclo sinódico médio da Lua em dias
+      const knownNewMoon = new Date(Date.UTC(2025, 0, 6, 12, 0, 0)); // Lua Nova em 6 de Jan de 2025 (UTC)
+
+      const daysSinceKnownNewMoon = (today.getTime() - knownNewMoon.getTime()) / (1000 * 60 * 60 * 24);
+      const currentCyclePosition = daysSinceKnownNewMoon % lunarCycle;
+
+      let lastNewMoon = new Date(knownNewMoon.getTime());
+      lastNewMoon.setDate(knownNewMoon.getDate() - Math.floor(daysSinceKnownNewMoon / lunarCycle) * lunarCycle);
+
+      const phases = [
+        { name: "Lua Nova", offset: 0 },
+        { name: "Quarto Crescente", offset: lunarCycle / 4 },
+        { name: "Lua Cheia", offset: lunarCycle / 2 },
+        { name: "Quarto Minguante", offset: 3 * lunarCycle / 4 }
+      ];
+
+      const currentMonthStart = new Date(year, month, 1);
+      const currentMonthEnd = new Date(year, month + 1, 0);
+
+      phases.forEach(phase => {
+        let phaseDate = new Date(lastNewMoon.getTime() + phase.offset * 24 * 60 * 60 * 1000);
+        while (phaseDate < currentMonthStart) {
+          phaseDate = new Date(phaseDate.getTime() + lunarCycle * 24 * 60 * 60 * 1000);
+        }
+        while (phaseDate <= currentMonthEnd) {
+          const formattedDate = phaseDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+          lunarPhasesList.innerHTML += `<li>${phase.name}: ${formattedDate}</li>`;
+          phaseDate = new Date(phaseDate.getTime() + lunarCycle * 24 * 60 * 60 * 1000);
+        }
+      });
     }
 
     function openAdminPanel() {
@@ -416,7 +560,10 @@
       animate();
     }
 
-    window.onload = renderTable;
+    window.onload = () => {
+      renderTable();
+      renderLunarCalendar();
+    };
   </script>
 </body>
-</html>
+  </html>
