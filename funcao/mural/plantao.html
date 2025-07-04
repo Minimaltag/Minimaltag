@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Plantão do mês atual</title>
+  <title>Plantão do Mês Atual</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -16,8 +16,8 @@
       margin-bottom: 20px;
     }
     .btn-admin, .btn-alterar, .btn-pdf, .btn-equipes {
-      padding: 6px 12px;
-      font-size: 14px;
+      padding: 8px 16px;
+      font-size: 16px;
       cursor: pointer;
     }
     .modal {
@@ -42,13 +42,19 @@
     }
     table {
       width: 100%;
+      max-width: 190mm; /* Limita a largura para caber em A4 */
       border-collapse: collapse;
       margin-top: 10px;
+      font-size: 14px; /* Fonte aumentada para visualização */
     }
     th, td {
       border: 1px solid #ccc;
-      padding: 8px;
+      padding: 6px; /* Padding reduzido para economizar espaço */
       text-align: left;
+    }
+    th {
+      background-color: #f4f4f4;
+      font-weight: bold;
     }
     .passado {
       background-color: #eee;
@@ -59,9 +65,46 @@
     textarea, input[type="password"], input[type="date"] {
       width: 100%;
       margin-bottom: 10px;
+      font-size: 14px;
     }
     textarea {
       height: 150px;
+    }
+    h1 {
+      font-size: 24px;
+    }
+    h3 {
+      font-size: 18px;
+    }
+
+    /* Estilos para impressão */
+    @media print {
+      .top-bar, .btn-admin, .btn-pdf {
+        display: none; /* Oculta botões na impressão */
+      }
+      body {
+        margin: 10mm; /* Margens para A4 */
+      }
+      .mural {
+        width: 100%;
+        max-width: 190mm; /* Ajusta para o tamanho útil de uma página A4 */
+      }
+      table {
+        font-size: 14px; /* Fonte aumentada para impressão */
+        width: 100%;
+        page-break-inside: avoid; /* Evita quebra de página dentro da tabela */
+      }
+      th, td {
+        padding: 5px; /* Padding reduzido para impressão */
+      }
+      h3 {
+        font-size: 16px; /* Título ajustado para impressão */
+        margin-bottom: 8px;
+      }
+      @page {
+        size: A4;
+        margin: 10mm; /* Margens da página A4 */
+      }
     }
   </style>
 </head>
@@ -123,12 +166,12 @@
 
   <script>
     const firebaseConfig = {
-    apiKey: "AIzaSyC5wHhdIZlY9txtYkN88R-67lIP5FZlFpY",
-    authDomain: "mtag-1c04d.firebaseapp.com",
-    projectId: "mtag-1c04d",
-    storageBucket: "mtag-1c04d.firebasestorage.app",
-    messagingSenderId: "487741931549",
-    appId: "1:487741931549:web:cf45afe3c7b5cda7de06f4"
+      apiKey: "AIzaSyC5wHhdIZlY9txtYkN88R-67lIP5FZlFpY",
+      authDomain: "mtag-1c04d.firebaseapp.com",
+      projectId: "mtag-1c04d",
+      storageBucket: "mtag-1c04d.firebasestorage.app",
+      messagingSenderId: "487741931549",
+      appId: "1:487741931549:web:cf45afe3c7b5cda7de06f4"
     };
 
     firebase.initializeApp(firebaseConfig);
@@ -234,7 +277,7 @@
       document.body.innerHTML = content;
       window.print();
       document.body.innerHTML = original;
-      gerarTabelaPlantao();
+      window.location.reload(); // Recarrega a página para restaurar os eventos
     }
 
     async function carregarEquipesDoFirestore() {
