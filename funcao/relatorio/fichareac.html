@@ -9,136 +9,147 @@
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <style>
-      /* Global Box-Sizing */
+      /* Global Reset */
       * {
         box-sizing: border-box;
-      }
-
-      /* General Body Styling */
-      body {
-        font-family: 'Inter', sans-serif;
         margin: 0;
         padding: 0;
-        background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
-        color: #333;
+      }
+
+      /* Body Styling */
+      body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        background-color: #f5f5f5;
+        color: #1a1a1a;
+        min-height: 100vh;
         display: flex;
         flex-direction: column;
         align-items: center;
-        min-height: 100vh;
-        overflow-x: hidden;
       }
 
       /* Header Styling */
       header {
-        background-color: #0077cc;
-        color: white;
-        padding: 1.5rem 0;
+        background-color: #ffffff;
         width: 100%;
+        padding: 1rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         text-align: center;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        position: relative;
       }
 
       h1 {
-        margin: 0;
-        font-size: 2rem;
-        font-weight: 700;
-        letter-spacing: 0.05em;
-      }
-
-      /* Back Button */
-      .btn-voltar {
-        position: absolute;
-        top: 1rem;
-        left: 1rem;
-        background: none;
-        border: none;
         font-size: 1.5rem;
-        cursor: pointer;
-        color: white;
-        padding: 0.5rem;
-        transition: color 0.3s ease;
+        font-weight: 600;
+        color: #1a1a1a;
       }
 
       .btn-voltar:hover {
-        color: #ff6b00;
+        color: #0077cc;
       }
 
-      .btn-voltar:focus {
-        outline: 2px solid #ff6b00;
-        outline-offset: 2px;
-      }
-
-      /* Main Content Area */
+      /* Main Content */
       main {
-        background-color: #ffffff;
-        padding: 2rem;
-        border-radius: 12px;
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
         width: 90%;
-        max-width: 1200px;
+        max-width: 1000px;
         margin: 1.5rem 0;
+        background-color: #ffffff;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
       }
 
-      /* Fichas Section */
-      .fichas-section {
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-      }
-
-      /* Filter and Button Container */
+      /* Filter Section */
       .filter-container {
         display: flex;
-        flex-wrap: wrap;
-        gap: 0.75rem;
+        flex-direction: column;
         align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .filter-group {
+        display: flex;
+        align-items: center;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        overflow: hidden;
+        width: 100%;
+        max-width: 220px;
+      }
+
+      .filter-group input[type="month"] {
+        border: none;
+        padding: 0.5rem;
+        font-size: 0.9rem;
+        width: 100%;
+        max-width: none;
+        transition: border-color 0.2s ease;
+      }
+
+      .filter-group input[type="month"]:focus {
+        outline: none;
+      }
+
+      .filter-group button {
+        border: none;
+        border-radius: 0 4px 4px 0;
+        padding: 0;
+        width: 40px;
+        height: 36px;
+        background-color: #0077cc;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+      }
+
+      .filter-group button:hover:not(:disabled) {
+        background-color: #005f99;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
       }
 
       /* Inputs */
-      input[type="text"],
-      input[type="month"],
-      input[type="date"] {
-        padding: 0.75rem;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        font-size: 1rem;
+      input[type="text"] {
+        padding: 0.5rem;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        font-size: 0.9rem;
         width: 100%;
-        max-width: 200px;
-        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        max-width: 700px;        
+        transition: border-color 0.2s ease;
       }
 
-      input[type="text"]:focus,
-      input[type="month"]:focus,
-      input[type="date"]:focus {
+      input[type="text"]:focus {
         border-color: #0077cc;
-        box-shadow: 0 0 0 3px rgba(0, 119, 204, 0.2);
-        outline: 2px solid #0077cc;
-        outline-offset: 2px;
+        outline: none;
       }
 
       /* Buttons */
       button {
-        padding: 0.75rem 1.5rem;
+        width: 40px;
+        height: 40px;
         border: none;
-        border-radius: 8px;
+        border-radius: 50%;
+        font-size: 1.2rem;
         cursor: pointer;
-        font-size: 1rem;
-        font-weight: 600;
-        background-color: #ff6b00;
-        color: white;
-        transition: all 0.3s ease;
+        background-color: #0077cc;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.2s ease;
       }
 
       button:hover:not(:disabled) {
-        background-color: #e65c00;
-        transform: translateY(-2px);
-      }
-
-      button:focus {
-        outline: 2px solid #e65c00;
-        outline-offset: 2px;
+        background-color: #005f99;
       }
 
       button.admin-btn.active {
@@ -151,11 +162,6 @@
 
       button.edit-btn {
         background-color: #0077cc;
-        margin-right: 0.5rem;
-      }
-
-      button.edit-btn:hover {
-        background-color: #005f99;
       }
 
       button.delete-btn {
@@ -166,99 +172,54 @@
         background-color: #c82333;
       }
 
-      button.refresh-btn {
-        background-color: #28a745;
-      }
-
       button.refresh-btn:disabled {
-        background-color: #dc3545;
+        background-color: #e0e0e0;
         cursor: not-allowed;
       }
 
-      button.refresh-btn:hover:not(:disabled) {
-        background-color: #218838;
-      }
-
-      /* Table */
+      /* Card Container */
       #fichasContainer {
-        overflow-x: auto;
-        border-radius: 8px;
-        max-width: 100%;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1rem;
+        padding: 1rem 0;
       }
 
-      #fichasTabela {
-        width: 100%;
-        border-collapse: collapse;
+      /* Card Styling */
+      .ficha-card {
         background-color: #ffffff;
+        border: 1px solid #e0e0e0;
         border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        table-layout: auto;
-      }
-
-      #fichasTabela caption {
-        caption-side: top;
-        font-size: 1rem;
-        font-weight: 600;
-        padding: 0.5rem;
-        color: #333;
-        text-align: left;
-      }
-
-      #fichasTabela thead {
-        background-color: #0077cc;
-        color: white;
-      }
-
-      #fichasTabela th,
-      #fichasTabela td {
         padding: 1rem;
-        text-align: left;
-        border: 1px solid #d1d1d1;
-        vertical-align: middle;
-        min-width: 0;
-        overflow-wrap: break-word;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
       }
 
-      #fichasTabela th:first-child,
-      #fichasTabela td:first-child {
-        writing-mode: vertical-lr;
-        text-orientation: upright;
-        width: 50px;
-        padding: 0.5rem;
-        text-align: center;
-        vertical-align: middle;
-        font-weight: 700;
+      .ficha-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        background-color: #f0f6ff;
       }
 
-      #fichasTabela th {
-        font-weight: 700;
-        text-transform: uppercase;
-        font-size: 0.9rem;
-        letter-spacing: 0.05em;
+      .ficha-card div {
+        margin-bottom: 0.5rem;
       }
 
-      #fichasTabela td {
-        font-size: 0.95rem;
+      .ficha-card strong {
+        display: inline-block;
+        width: 100px;
+        font-weight: 600;
         color: #333;
       }
 
-      #fichasTabela .actions {
+      .ficha-card .actions {
         display: none;
-        width: 120px;
+        margin-top: 0.5rem;
       }
 
-      #fichasTabela.admin-mode .actions {
-        display: table-cell;
-      }
-
-      #fichasTabela tbody tr:nth-child(even) {
-        background-color: #f8fafc;
-      }
-
-      #fichasTabela tbody tr:hover {
-        background-color: #e6f0fa;
-        transition: background-color 0.2s ease;
+      .ficha-card.admin-mode .actions {
+        display: flex;
+        gap: 0.5rem;
       }
 
       /* Edit Form Overlay */
@@ -269,46 +230,48 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.5);
+        background: rgba(0, 0, 0, 0.4);
         align-items: center;
         justify-content: center;
         z-index: 1000;
-        overflow-x: hidden;
       }
 
       .edit-form {
-        background: white;
-        padding: 2rem;
-        border-radius: 12px;
+        background: #ffffff;
+        padding: 1.5rem;
+        border-radius: 8px;
         width: 90%;
-        max-width: 500px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        max-width: 400px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       }
 
       .edit-form h2 {
-        margin-top: 0;
-        font-size: 1.5rem;
-        color: #333;
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
       }
 
       .edit-form label {
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin-bottom: 0.25rem;
         display: block;
-        margin: 0.5rem 0 0.2rem;
-        font-weight: 600;
       }
 
       .edit-form input,
       .edit-form textarea {
         width: 100%;
-        padding: 0.75rem;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        font-size: 1rem;
+        padding: 0.5rem;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        margin-bottom: 0.75rem;
       }
 
       .edit-form button {
-        margin-top: 1rem;
         width: 48%;
+        margin-top: 0.5rem;
+        border-radius: 4px;
       }
 
       .edit-form button[type="button"] {
@@ -321,77 +284,64 @@
 
       /* Responsive Design */
       @media (max-width: 768px) {
-        h1 {
-          font-size: 1.8rem;
-        }
-
         main {
-          padding: 1.5rem;
           width: 95%;
+          padding: 1rem;
         }
 
         .filter-container {
           flex-direction: column;
-          align-items: stretch;
         }
 
-        input[type="text"],
-        input[type="month"],
-        input[type="date"] {
+        .filter-group,
+        input[type="text"] {
           max-width: none;
         }
 
+        .button-group {
+          flex-wrap: wrap;
+        }
+
         button {
-          width: 100%;
-          padding: 0.75rem;
+          width: 36px;
+          height: 36px;
+          font-size: 1.1rem;
         }
 
-        #fichasTabela th,
-        #fichasTabela td {
-          padding: 0.75rem;
-          font-size: 0.9rem;
+        .filter-group button {
+          height: 34px;
         }
 
-        #fichasTabela th:first-child,
-        #fichasTabela td:first-child {
-          padding: 0.5rem;
-          font-size: 0.9rem;
-        }
-
-        #fichasTabela .actions {
-          width: 100px;
+        #fichasContainer {
+          grid-template-columns: 1fr;
         }
       }
 
       @media (max-width: 480px) {
         h1 {
-          font-size: 1.5rem;
+          font-size: 1.25rem;
         }
 
         .btn-voltar {
-          font-size: 1.2rem;
-        }
-
-        input[type="text"],
-        input[type="month"],
-        input[type="date"] {
-          font-size: 0.9rem;
-        }
-
-        #fichasTabela th,
-        #fichasTabela td {
-          font-size:-0.85rem;
-          padding: 0.5rem;
-        }
-
-        #fichasTabela th:first-child,
-        #fichasTabela td:first-child {
-          font-size: 0.85rem;
+          font-size: 1rem;
         }
 
         .edit-form {
           padding: 1rem;
-          max-width: 90%;
+        }
+
+        .ficha-card {
+          padding: 0.75rem;
+        }
+
+        button {
+          width: 32px;
+          height: 32px;
+          font-size: 1rem;
+        }
+
+        .filter-group button {
+          height: 30px;
         }
       }
     </style>
@@ -413,41 +363,39 @@
     <main>
       <div class="fichas-section">
         <div class="filter-container">
-          <input type="month" id="filtroMes" aria-label="Filtrar fichas por mês" />
-          <button onclick="filtrarPorMes()" aria-label="Aplicar filtro por mês">Filtrar por Mês</button>
-          <button onclick="gerarPDF()" aria-label="Gerar relatório em PDF">Gerar PDF</button>
-          <button class="admin-btn" onclick="toggleAdminMode()" aria-label="Ativar ou desativar modo administrativo">Ativar Modo Administrativo</button>
-          <button class="refresh-btn" id="refreshBtn" onclick="atualizarDados()" aria-label="Atualizar dados do Firebase">Atualizar</button>
+          <div class="filter-group">
+            <input type="month" id="filtroMes" aria-label="Filtrar fichas por mês" />
+            <button onclick="filtrarPorMes()" aria-label="Aplicar filtro por mês">
+              <i class="fas fa-filter"></i>
+            </button>
+          </div>
+          <input
+            type="text"
+            id="buscaInput"
+            placeholder="Buscar ficha..."
+            onkeyup="filtrarTabela()"
+            aria-label="Buscar fichas por texto"
+          />
+          <div class="button-group">
+            <button onclick="gerarPDF()" aria-label="Gerar relatório em PDF">
+              <i class="fas fa-file-pdf"></i>
+            </button>
+            <button class="admin-btn" onclick="toggleAdminMode()" aria-label="Ativar ou desativar modo administrativo">
+              <i class="fas fa-user-shield"></i>
+            </button>
+            <button class="refresh-btn" id="refreshBtn" onclick="atualizarDados()" aria-label="Atualizar dados do Firebase">
+              <i class="fas fa-sync-alt"></i>
+            </button>
+          </div>
         </div>
-        <input
-          type="text"
-          id="buscaInput"
-          placeholder="Buscar ficha..."
-          onkeyup="filtrarTabela()"
-          aria-label="Buscar fichas por texto"
-        />
-        <div id="fichasContainer">
-          <table id="fichasTabela" role="grid" aria-describedby="tableCaption">
-            <thead>
-              <tr>
-                <th scope="col">Data</th>
-                <th scope="col">Localidade</th>
-                <th scope="col">Ação</th>
-                <th scope="col">Responsável</th>
-                <th scope="col">Observação</th>
-                <th scope="col" class="actions" aria-hidden="true">Ações</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
+        <div id="fichasContainer"></div>
       </div>
       <div class="edit-overlay" id="editOverlay" role="dialog" aria-modal="true" aria-label="Formulário de edição de ficha">
         <form class="edit-form" id="editForm">
           <h2>Editar Ficha</h2>
           <input type="hidden" id="editId" />
           <label for="editData">Data:</label>
-          <input type="date" id="editData" required aria-label="Data da ficha" />
+          <input type="text" id="editData" placeholder="dd/mm/aaaa" inputmode="numeric" maxlength="10" required aria-label="Data da ficha" />
           <label for="editLocalidade">Localidade:</label>
           <input type="text" id="editLocalidade" required aria-label="Localidade da ficha" />
           <label for="editAcao">Ação:</label>
@@ -479,13 +427,27 @@
       const CACHE_KEY = 'fichas_cache';
       const CACHE_TIMESTAMP_KEY = 'fichas_cache_timestamp';
       const CACHE_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours for regular cache
-      const REFRESH_COOLDOWN = 8 * 60 * 60 * 1000; // 8 hours for refresh button
+      const REFRESH_COOLDOWN = 0 * 60 * 60 * 1000; // 0 hours for refresh button
       const REFRESH_TIMESTAMP_KEY = 'refresh_timestamp';
 
       function formatarDataBR(dataISO) {
         if (!dataISO) return '';
         const [ano, mes, dia] = dataISO.split("-");
-        return `${dia}${mes}${ano.slice(2)}`;
+        return `${dia}/${mes}/${ano}`;
+      }
+
+      function parseDataBR(dataBR) {
+        if (!dataBR) return '';
+        const [dia, mes, ano] = dataBR.split('/');
+        return `${ano}-${mes}-${dia}`;
+      }
+
+      function validateDataBR(dataBR) {
+        const regex = /^\d{2}\/\d{2}\/\d{4}$/;
+        if (!regex.test(dataBR)) return false;
+        const [dia, mes, ano] = dataBR.split('/').map(Number);
+        const date = new Date(ano, mes - 1, dia);
+        return date.getDate() === dia && date.getMonth() === mes - 1 && date.getFullYear() === ano;
       }
 
       function checkRefreshButtonState() {
@@ -495,10 +457,10 @@
 
         if (lastRefresh && (now - parseInt(lastRefresh) < REFRESH_COOLDOWN)) {
           refreshBtn.disabled = true;
-          refreshBtn.style.backgroundColor = '#dc3545';
+          refreshBtn.style.backgroundColor = '#e0e0e0';
         } else {
           refreshBtn.disabled = false;
-          refreshBtn.style.backgroundColor = '#28a745';
+          refreshBtn.style.backgroundColor = '#0077cc';
         }
       }
 
@@ -507,7 +469,6 @@
         if (refreshBtn.disabled) return;
 
         try {
-          // Clear cache and fetch fresh data
           localStorage.removeItem(CACHE_KEY);
           localStorage.removeItem(CACHE_TIMESTAMP_KEY);
           localStorage.setItem(REFRESH_TIMESTAMP_KEY, new Date().getTime().toString());
@@ -520,7 +481,6 @@
 
       async function carregarFichas() {
         try {
-          // Check if data exists in localStorage and is not expired
           const cachedData = localStorage.getItem(CACHE_KEY);
           const cachedTimestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
           const now = new Date().getTime();
@@ -532,12 +492,10 @@
             return;
           }
 
-          // Fetch from Firebase if no valid cache
           const snapshot = await db.collection('fichas').get();
           fichasCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           fichasCache.sort((a, b) => new Date(b.data) - new Date(a.data));
 
-          // Store in localStorage
           localStorage.setItem(CACHE_KEY, JSON.stringify(fichasCache));
           localStorage.setItem(CACHE_TIMESTAMP_KEY, now.toString());
 
@@ -549,36 +507,28 @@
       }
 
       function exibirFichas(fichas) {
-        const tbody = document.querySelector('#fichasTabela tbody');
-        tbody.innerHTML = '';
+        const container = document.getElementById('fichasContainer');
+        container.innerHTML = '';
         fichas.forEach(ficha => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${formatarDataBR(ficha.data)}</td>
-            <td>${ficha.localidade}</td>
-            <td>${ficha.acao}</td>
-            <td>${(ficha.responsavel || []).join(', ')}</td>
-            <td>${ficha.observacao || '-'}</td>
-            <td class="actions" ${isAdminMode ? '' : 'aria-hidden="true"'}>
-              <button class="edit-btn" onclick="abrirEditForm('${ficha.id}')" aria-label="Editar ficha com ID ${ficha.id}">Editar</button>
-              <button class="delete-btn" onclick="excluirFicha('${ficha.id}')" aria-label="Excluir ficha com ID ${ficha.id}">Excluir</button>
-            </td>
+          const card = document.createElement('div');
+          card.className = `ficha-card ${isAdminMode ? 'admin-mode' : ''}`;
+          card.innerHTML = `
+            <div><strong>Data:</strong> ${formatarDataBR(ficha.data)}</div>
+            <div><strong>Localidade:</strong> ${ficha.localidade}</div>
+            <div><strong>Ação:</strong> ${ficha.acao}</div>
+            <div><strong>Responsável:</strong> ${(ficha.responsavel || []).join(', ')}</div>
+            <div><strong>Observação:</strong> ${ficha.observacao || '-'}</div>
+            <div class="actions" ${isAdminMode ? '' : 'aria-hidden="true"'}>
+              <button class="edit-btn" onclick="abrirEditForm('${ficha.id}')" aria-label="Editar ficha com ID ${ficha.id}">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="delete-btn" onclick="excluirFicha('${ficha.id}')" aria-label="Excluir ficha com ID ${ficha.id}">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
           `;
-          tbody.appendChild(tr);
+          container.appendChild(card);
         });
-        updateTableVisibility();
-      }
-
-      function updateTableVisibility() {
-        const table = document.getElementById('fichasTabela');
-        const actionsCells = document.querySelectorAll('#fichasTabela .actions');
-        if (isAdminMode) {
-          table.classList.add('admin-mode');
-          actionsCells.forEach(cell => cell.removeAttribute('aria-hidden'));
-        } else {
-          table.classList.remove('admin-mode');
-          actionsCells.forEach(cell => cell.setAttribute('aria-hidden', 'true'));
-        }
       }
 
       function toggleAdminMode() {
@@ -586,9 +536,9 @@
         if (password === '0000') {
           isAdminMode = !isAdminMode;
           const adminBtn = document.querySelector('.admin-btn');
-          adminBtn.textContent = isAdminMode ? 'Desativar Modo Administrativo' : 'Ativar Modo Administrativo';
+          adminBtn.innerHTML = isAdminMode ? '<i class="fas fa-user-shield"></i>' : '<i class="fas fa-user-shield"></i>';
           adminBtn.classList.toggle('active', isAdminMode);
-          updateTableVisibility();
+          exibirFichas(fichasCache);
         } else {
           alert('Senha incorreta!');
         }
@@ -600,7 +550,7 @@
         if (!ficha) return;
 
         document.getElementById('editId').value = ficha.id;
-        document.getElementById('editData').value = ficha.data;
+        document.getElementById('editData').value = formatarDataBR(ficha.data);
         document.getElementById('editLocalidade').value = ficha.localidade;
         document.getElementById('editAcao').value = ficha.acao;
         document.getElementById('editResponsavel').value = (ficha.responsavel || []).join(', ');
@@ -618,8 +568,13 @@
       document.getElementById('editForm').onsubmit = async (e) => {
         e.preventDefault();
         const id = document.getElementById('editId').value;
+        const dataBR = document.getElementById('editData').value;
+        if (!validateDataBR(dataBR)) {
+          alert('Por favor, insira a data no formato dd/mm/aaaa válido.');
+          return;
+        }
         const updatedFicha = {
-          data: document.getElementById('editData').value,
+          data: parseDataBR(dataBR),
           localidade: document.getElementById('editLocalidade').value,
           acao: document.getElementById('editAcao').value,
           responsavel: document.getElementById('editResponsavel').value.split(',').map(r => r.trim()).filter(r => r),
@@ -629,7 +584,6 @@
           await db.collection('fichas').doc(id).update(updatedFicha);
           fichasCache = fichasCache.map(f => f.id === id ? { id, ...updatedFicha } : f);
           fichasCache.sort((a, b) => new Date(b.data) - new Date(a.data));
-          // Update localStorage
           localStorage.setItem(CACHE_KEY, JSON.stringify(fichasCache));
           localStorage.setItem(CACHE_TIMESTAMP_KEY, new Date().getTime().toString());
           exibirFichas(fichasCache);
@@ -645,7 +599,6 @@
         try {
           await db.collection('fichas').doc(id).delete();
           fichasCache = fichasCache.filter(f => f.id !== id);
-          // Update localStorage
           localStorage.setItem(CACHE_KEY, JSON.stringify(fichasCache));
           localStorage.setItem(CACHE_TIMESTAMP_KEY, new Date().getTime().toString());
           exibirFichas(fichasCache);
@@ -656,8 +609,8 @@
 
       function filtrarTabela() {
         const filtro = document.getElementById('buscaInput').value.toLowerCase();
-        document.querySelectorAll('#fichasTabela tbody tr').forEach(row => {
-          row.style.display = row.textContent.toLowerCase().includes(filtro) ? '' : 'none';
+        document.querySelectorAll('.ficha-card').forEach(card => {
+          card.style.display = card.textContent.toLowerCase().includes(filtro) ? '' : 'none';
         });
       }
 
@@ -677,23 +630,38 @@
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
 
-        doc.text('Relatório de Ações', 14, 15);
+        // Centralizar o título
+        const title = 'Relatório de Ações';
+        const pageWidth = doc.internal.pageSize.getWidth();
+        doc.setFontSize(16);
+        doc.text(title, pageWidth / 2, 15, { align: 'center' });
+
+        // Gerar a tabela
         doc.autoTable({
           startY: 20,
           head: [['Data', 'Localidade', 'Ação', 'Responsável', 'Observação']],
-          body: Array.from(document.querySelectorAll('#fichasTabela tbody tr')).map(tr =>
-            Array.from(tr.querySelectorAll('td')).slice(0, 5).map(td => td.innerText)
+          body: Array.from(document.querySelectorAll('.ficha-card')).map(card =>
+            Array.from(card.querySelectorAll('div:not(.actions)')).map(div => div.innerText.replace(/^(Data|Localidade|Ação|Responsável|Observação):\s*/, ''))
           ),
           styles: { fontSize: 9 },
           headStyles: { fillColor: [0, 119, 204], textColor: [255, 255, 255] },
-          alternateRowStyles: { fillColor: [248, 250, 252] },
+          alternateRowStyles: { fillColor: [245, 245, 245] },
+          margin: { bottom: 20 }, // Espaço para o rodapé
+          didDrawPage: function (data) {
+            // Adicionar rodapé com número da página e data de emissão
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const currentPage = data.pageCount;
+            const emissionDate = new Date().toLocaleDateString('pt-BR');
+            const footerText = `Página ${currentPage} | Emitido em: ${emissionDate}`;
+            doc.setFontSize(8);
+            doc.text(footerText, pageWidth / 2, pageHeight - 10, { align: 'center' });
+          }
         });
 
         doc.save('relatorio_acoes.pdf');
       }
 
-      // Initialize
       carregarFichas();
     </script>
   </body>
-  </html>
+</html>
