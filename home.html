@@ -26,29 +26,6 @@
     .header-bg {
       background: linear-gradient(135deg, #1e3a8a, #3b82f6);
     }
-    .modal {
-      position: fixed;
-      z-index: 1000;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.6);
-      display: none;
-      backdrop-filter: blur(2px);
-    }
-    .modal-content {
-      background: #fff;
-      margin: 10% auto;
-      padding: 1.5rem;
-      border-radius: 8px;
-      max-width: 500px;
-      max-height: 80vh;
-      overflow-y: auto;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-    }
-    .modal-content::-webkit-scrollbar { width: 6px; }
-    .modal-content::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
     .action-button {
       transition: all 0.2s ease;
       width: 100%;
@@ -79,18 +56,9 @@
       text-decoration: underline;
     }
     @media (max-width: 640px) {
-      .modal-content { margin: 15% auto; padding: 1rem; }
       body::before {
         background-size: 80%;
       }
-    }
-    input[type="number"]::-webkit-inner-spin-button,
-    input[type="number"]::-webkit-outer-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
-    input[type="number"] {
-      -moz-appearance: textfield;
     }
   </style>  
 </head>
@@ -106,6 +74,7 @@
       }
     });
   </script>
+
   <!-- Header -->
   <header class="header-bg text-white py-6">
     <div class="container mx-auto px-4 text-center">
@@ -124,149 +93,15 @@
     <!-- Action Buttons -->
     <section class="grid grid-cols-1 gap-4">
       <button class="action-button bg-blue-600 text-white py-2 px-4 rounded shadow hover:bg-blue-700" onclick="window.location.href='funcao/mural/bt.html'">MURAL</button>
-      <button class="action-button bg-blue-600 text-white py-2 px-4 rounded shadow hover:bg-blue-700" onclick="bloquearCadastro()">CADASTROS DE FAMILIAS</button>
+      <button class="action-button bg-blue-600 text-white py-2 px-4 rounded shadow hover:bg-blue-700" onclick="window.location.href='funcao/mural/medicao.html'">MEDICAO</button>
       <button class="action-button bg-blue-600 text-white py-2 px-4 rounded shadow hover:bg-blue-700" onclick="window.location.href='funcao/relatorio/acaoreac.html'">REGISTRO DE AÇÕES</button>
-      <button class="action-button bg-blue-600 text-white py-2 px-4 rounded shadow hover:bg-blue-700" onclick="window.location.href='funcao/jg/bt.html'">PASSA TEMPO</button>
+      <button class="action-button bg-blue-600 text-white py-2 px-4 rounded shadow hover:bg-blue-700" onclick="window.location.href='funcao/mural/plantao.html'">PLANTAO</button>
     </section>
-
-    <!-- Contact Info -->
-    <div class="text-center mt-6 contact упоминать-info">
-      <p>Instagram: <a href="https://instagram.com/minimaltag7">minimaltag7</a></p>
-      <p>Contato: <a href="mailto:minimaltag7@gmail.com">minimaltag7@gmail.com</a></p>
-    </div>
-
-    <!-- Terms Modal -->
-    <div id="termsModal" class="modal">
-      <div class="modal-content">
-        <h2 class="text-xl font-bold text-gray-800 mb-3">Termos e Responsabilidades</h2>
-        <div class="text-gray-700 text-sm">
-          <h3 class="text-lg font-semibold mb-2">Termo de Uso - MTAG</h3>
-          <p><strong>Versão 1.0 – Junho 202 numărul0</strong></p>
-          <h4 class="font-semibold mt-3">1. Apresentação</h4>
-          <p class="mb-2">O MTAG auxilia a SEMPDEC com cadastro de famílias, relatórios, documentos na nuvem, mural, chat anônimo e mais.</p>
-          <h4 class="font-semibold mt-3">2. Acesso</h4>
-          <p class="mb-2">Restrito à equipe SEMPDEC, com permissões por perfil.</p>
-          <h4 class="font-semibold mt-3">3. Propriedade</h4>
-          <p class="mb-2">Propriedade do desenvolvedor, cedido para uso interno. Proibida reprodução ou modificação sem autorização.</p>
-          <h4 class="font-semibold mt-3">4. Licença</h4>
-          <p class="mb-2">Uso exclusivo SEMPDEC, não transferível.</p>
-          <h4 class="font-semibold mt-3">5. Manutenção</h4>
-          <p class="mb-2">Atualizações mensais pelo desenvolvedor.</p>
-          <h4 class="font-semibold mt-3">6. Garantias</h4>
-          <p class="mb-2">Fornecido "como está". Sem garantia de disponibilidade total.</p>
-          <h4 class="font-semibold mt-3">7. Privacidade</h4>
-          <p class="mb-2">Dados restritos à SEMPDEC, sem compartilhamento externo.</p>
-        </div>
-        <div class="flex justify-end gap-2 mt-4">
-          <button id="agreeBtn" class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">Compreendo</button>
-          <button id="disagreeBtn" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">Não concordo</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- PIN Modal -->
-    <div id="pinModal" class="modal">
-      <div class="modal-content">
-        <h2 class="text-xl font-bold text-gray-800 mb-3">Digite o PIN de Acesso</h2>
-        <input
-          type="number"
-          id="pinInput"
-          class="w-full p-2 mb-4 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
-          placeholder="PIN de 4 dígitos"
-          maxlength="4"
-          pattern="\d{4}"
-          oninput="this.value = this.value.slice(0, 4); if(this.value.length === 4) validatePin(this.value);"
-        />
-      </div>
-    </div>
 
     <!-- Footer -->
     <footer class="col-span-full text-center text-sm text-gray-500 mt-6 bg-transparent">
       © 2025 Desenvolvido por Darlan Cardoso | V. 3.28.6
     </footer>
   </main>
-
-  <!-- JavaScript -->
-  <script>
-    const termsModal = document.getElementById("termsModal");
-    const agreeBtn = document.getElementById("agreeBtn");
-    const disagreeBtn = document.getElementById("disagreeBtn");
-    const pinModal = document.getElementById("pinModal");
-    const pinInput = document.getElementById("pinInput");
-
-    agreeBtn.onclick = () => {
-      localStorage.setItem("termsAccepted", "true");
-      termsModal.style.display = "none";
-    };
-
-    disagreeBtn.onclick = () => {
-      alert("Você será redirecionado por não concordar com os termos.");
-      window.location.href = "index.html";
-    };
-
-    window.onclick = (e) => {
-      if (e.target === termsModal) termsModal.style.display = "none";
-      if (e.target === pinModal) pinModal.style.display = "none";
-    };
-
-    function bloquearCadastro() {
-      // Check if the user is locked out
-      const lockoutTime = localStorage.getItem("lockoutTime");
-      const now = new Date().getTime();
-      const lockoutDuration = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
-
-      if (lockoutTime && now < parseInt(lockoutTime) + lockoutDuration) {
-        const remainingTime = Math.ceil((parseInt(lockoutTime) + lockoutDuration - now) / (60 * 1000));
-        alert(`Acesso suspenso. Tente novamente em ${remainingTime} minutos.`);
-        return;
-      }
-
-      // Show PIN input modal
-      pinModal.style.display = "block";
-      pinInput.value = "";
-      pinInput.focus();
-    }
-
-    function validatePin(pin) {
-      const correctPin = "2023";
-      let failedAttempts = parseInt(localStorage.getItem("failedAttempts") || "0");
-      const now = new Date().getTime();
-
-      // Validate PIN
-      if (pin.length !== 4 || !/^\d{4}$/.test(pin)) {
-        alert("O PIN deve conter exatamente 4 dígitos numéricos.");
-        pinModal.style.display = "none";
-        return;
-      }
-
-      if (pin === correctPin) {
-        // Reset failed attempts on successful login
-        localStorage.setItem("failedAttempts", "0");
-        localStorage.removeItem("lockoutTime");
-        pinModal.style.display = "none";
-        window.location.href = "funcao/cadastro/acaocafa.html";
-      } else {
-        failedAttempts++;
-        localStorage.setItem("failedAttempts", failedAttempts.toString());
-
-        if (failedAttempts >= 3) {
-          // Set lockout time
-          localStorage.setItem("lockoutTime", now.toString());
-          localStorage.setItem("failedAttempts", "0");
-          alert("PIN incorreto. Acesso suspenso por 8 horas devido a 3 tentativas inválidas.");
-        } else {
-          alert(`PIN incorreto. Você tem ${3 - failedAttempts} tentativa(s) restante(s).`);
-        }
-        pinModal.style.display = "none";
-      }
-    }
-
-    window.addEventListener("DOMContentLoaded", () => {
-      const accepted = localStorage.getItem("termsAccepted");
-      if (!accepted) {
-        termsModal.style.display = "block";
-      }
-    });
-  </script>
 </body>
-            </html>
+</html>
