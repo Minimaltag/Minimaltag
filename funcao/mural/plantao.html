@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Plantão do Mês Atual</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .top-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .btn-admin, .btn-alterar, .btn-pdf, .btn-equipes {
+      padding: 8px 16px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 500px;
+    }
+    .admin-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    table {
+      width: 100%;
+      max-width: 190mm; /* Limita a largura para caber em A4 */
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 14px; /* Fonte aumentada para visualização */
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px; /* Padding reduzido para economizar espaço */
+      text-align: left;
+    }
+    th {
+      background-color: #f4f4f4;
+      font-weight: bold;
+    }
+    .passado {
+      background-color: #eee;
+    }
+    .hoje {
+      background-color: #ffeeba;
+    }
+    textarea, input[type="password"], input[type="date"] {
+      width: 100%;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+    textarea {
+      height: 150px;
+    }
+    h1 {
+      font-size: 24px;
+    }
+    h3 {
+      font-size: 18px;
+    }
+
+    /* Estilos para impressão */
+    @media print {
+      .top-bar, .btn-admin, .btn-pdf {
+        display: none; /* Oculta botões na impressão */
+      }
+      body {
+        margin: 10mm; /* Margens para A4 */
+      }
+      .mural {
+        width: 100%;
+        max-width: 190mm; /* Ajusta para o tamanho útil de uma página A4 */
+      }
+      table {
+        font-size: 14px; /* Fonte aumentada para impressão */
+        width: 100%;
+        page-break-inside: avoid; /* Evita quebra de página dentro da tabela */
+      }
+      th, td {
+        padding: 5px; /* Padding reduzido para impressão */
+      }
+      h3 {
+        font-size: 16px; /* Título ajustado para impressão */
+        margin-bottom: 8px;
+      }
+      @page {
+        size: A4;
+        margin: 10mm; /* Margens da página A4 */
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Plantão do Mês Atual</h1>
+
+  <div class="top-bar">
+    <button class="btn-admin" onclick="abrirModalAdmin()">Administrativo</button>
+    <button class="btn-pdf" onclick="printSection('muralPlantao')">📄 PDF</button>
+  </div>
+
+  <div class="mural" id="muralPlantao"></div>
+
+  <!-- Modal Administrativo -->
+  <div class="modal" id="modalAdmin">
+    <div class="modal-content">
+      <h3>Acesso Administrativo</h3>
+      <input type="password" id="senhaAdmin" placeholder="Digite a senha" />
+      <button onclick="validarSenhaAdmin()">Acessar</button>
+      <div id="adminButtons" style="display: none;" class="admin-buttons">
+        <button class="btn-equipes" onclick="abrirModalEquipes()">Alterar Ordem das Equipes</button>
+        <button class="btn-alterar" onclick="abrirModalDataInicial()">Alterar Data Inicial</button>
+      </div>
+      <p id="erroSenha" style="color: red; display: none;">Senha incorreta!</p>
+    </div>
+  </div>
+
+  <!-- Modal de Data Inicial -->
+  <div class="modal" id="modalDataInicial">
+    <div class="modal-content">
+      <h3>Definir Nova Data Inicial</h3>
+      <input type="date" id="novaDataInicial" />
+      <button onclick="salvarDataInicial()">Salvar Data</button>
+    </div>
+  </div>
+
+  <!-- Modal de Ordem das Equipes -->
+  <div class="modal" id="modalEquipes">
+    <div class="modal-content">
+      <h3>Editar Ordem das Equipes</h3>
+      <textarea id="textareaEquipes" placeholder="Uma equipe por linha"></textarea>
+      <button onclick="salvarEquipes()">Salvar Ordem</button>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyC5wHhdIZlY9txtYkN88R-67lIP5FZlFpY",
+      authDomain: "mtag-1c04d.firebaseapp.com",
+      projectId: "mtag-1c04d",
+      storageBucket: "mtag-1c04d.firebasestorage.app",
+      messagingSenderId: "487741931549",
+      appId: "1:487741931549:web:cf45afe3c7b5cda7de06f4"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const docRef = db.collection("Plantao").doc("ordemEquipes");
+
+    let sequenciaEquipes = [];
+    let dataInicialPlantao = new Date(new Date().getFullYear(), 0, 1);
+
+    function abrirModalAdmin() {
+      document.getElementById("modalAdmin").style.display = "flex";
+      document.getElementById("senhaAdmin").value = "";
+      document.getElementById("adminButtons").style.display = "none";
+      document.getElementById("erroSenha").style.display = "none";
+    }
+
+    function validarSenhaAdmin() {
+      const senha = document.getElementById("senhaAdmin").value;
+      if (senha === "0000") {
+        document.getElementById("adminButtons").style.display = "flex";
+        document.getElementById("erroSenha").style.display = "none";
+      } else {
+        document.getElementById("erroSenha").style.display = "block";
+      }
+    }
+
+    function gerarTabelaPlantao(mes = null, ano = null) {
+      const mural = document.getElementById("muralPlantao");
+      mural.innerHTML = "";
+
+      const hoje = new Date();
+      const mesSelecionado = mes !== null ? mes : hoje.getMonth();
+      const anoSelecionado = ano !== null ? ano : hoje.getFullYear();
+      const diaHoje = hoje.getDate();
+      const diasNoMes = new Date(anoSelecionado, mesSelecionado + 1, 0).getDate();
+
+      const titulo = document.createElement("h3");
+      titulo.textContent = `Mês: ${(mesSelecionado + 1).toString().padStart(2, '0')}/${anoSelecionado}`;
+      const tabela = document.createElement("table");
+      tabela.innerHTML = "<thead><tr><th>Dia</th><th>Semana</th><th>Equipe</th></tr></thead><tbody></tbody>";
+      const tbody = tabela.querySelector("tbody");
+
+      for (let dia = 1; dia <= diasNoMes; dia++) {
+        const data = new Date(anoSelecionado, mesSelecionado, dia);
+        const nomeSemana = data.toLocaleDateString("pt-BR", { weekday: "long" });
+        const diffDias = Math.floor((data - dataInicialPlantao) / (1000 * 60 * 60 * 24));
+        const indexEquipe = diffDias >= 0 ? diffDias % sequenciaEquipes.length : 0;
+
+        const linha = tbody.insertRow();
+        if (anoSelecionado === hoje.getFullYear() && mesSelecionado === hoje.getMonth()) {
+          if (dia < diaHoje) linha.classList.add("passado");
+          else if (dia === diaHoje) linha.classList.add("hoje");
+        }
+
+        linha.insertCell().textContent = dia;
+        linha.insertCell().textContent = nomeSemana;
+        linha.insertCell().textContent = sequenciaEquipes[indexEquipe] || "";
+      }
+
+      mural.appendChild(titulo);
+      mural.appendChild(tabela);
+    }
+
+    function abrirModalDataInicial() {
+      document.getElementById("modalDataInicial").style.display = "flex";
+      document.getElementById("novaDataInicial").value = dataInicialPlantao.toISOString().split("T")[0];
+    }
+
+    async function salvarDataInicial() {
+      const input = document.getElementById("novaDataInicial").value;
+      if (input) {
+        dataInicialPlantao = new Date(input);
+        await docRef.set({
+          sequenciaEquipes,
+          dataInicial: input
+        });
+        document.getElementById("modalDataInicial").style.display = "none";
+        gerarTabelaPlantao();
+      }
+    }
+
+    function abrirModalEquipes() {
+      document.getElementById("modalEquipes").style.display = "flex";
+      document.getElementById("textareaEquipes").value = sequenciaEquipes.join("\n");
+    }
+
+    async function salvarEquipes() {
+      const texto = document.getElementById("textareaEquipes").value.trim();
+      if (!texto) return;
+      const equipes = texto.split("\n").map(e => e.trim()).filter(e => e);
+      sequenciaEquipes = equipes;
+      await docRef.set({
+        sequenciaEquipes,
+        dataInicial: dataInicialPlantao.toISOString().split("T")[0]
+      });
+      document.getElementById("modalEquipes").style.display = "none";
+      gerarTabelaPlantao();
+    }
+
+    function printSection(id) {
+      const original = document.body.innerHTML;
+      const content = document.getElementById(id).innerHTML;
+      document.body.innerHTML = content;
+      window.print();
+      document.body.innerHTML = original;
+      window.location.reload(); // Recarrega a página para restaurar os eventos
+    }
+
+    async function carregarEquipesDoFirestore() {
+      const doc = await docRef.get();
+      if (doc.exists) {
+        const data = doc.data();
+        sequenciaEquipes = data.sequenciaEquipes || [];
+        if (data.dataInicial) {
+          dataInicialPlantao = new Date(data.dataInicial);
+        }
+      } else {
+        sequenciaEquipes = [
+          "Silvano, Anderson", "Silvano, Anderson", "Silvano, Anderson",
+          "Bruno, Josué", "Sadrack, Elison, Talisom", "Silvano, Anderson",
+          "Bruno, Josué", "Sadrack, Elison, Talisom", "Sadrack, Elison, Talisom",
+          "Sadrack, Elison, Talisom", "Silvano, Anderson", "Bruno, Josué",
+          "Sadrack, Elison, Talisom", "Silvano, Anderson", "Bruno, Josué",
+          "Bruno, Josué", "Bruno, Josué", "Sadrack, Elison, Talisom",
+          "Silvano, Anderson", "Bruno, Josué", "Sadrack, Elison, Talisom"
+        ];
+        dataInicialPlantao = new Date(new Date().getFullYear(), 0, 1);
+        await docRef.set({
+          sequenciaEquipes,
+          dataInicial: dataInicialPlantao.toISOString().split("T")[0]
+        });
+      }
+      gerarTabelaPlantao();
+    }
+
+    window.onclick = function(event) {
+      ["modalAdmin", "modalDataInicial", "modalEquipes"].forEach(id => {
+        const modal = document.getElementById(id);
+        if (event.target === modal) modal.style.display = "none";
+      });
+    };
+
+    carregarEquipesDoFirestore();
+  </script>
+</body>
+</html>

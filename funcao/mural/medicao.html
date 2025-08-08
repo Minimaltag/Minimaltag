@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Medição do Mês Atual</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .btn-admin,
+    .btn-alterar,
+    .btn-pdf {
+      padding: 6px 12px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+
+    .passado {
+      background-color: #eee;
+    }
+
+    .hoje {
+      background-color: #ffeeba;
+    }
+
+    input[type="date"],
+    input[type="number"],
+    input[type="password"] {
+      padding: 6px 12px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin: 5px 0;
+    }
+
+    textarea {
+      width: 100%;
+      margin: 5px 0;
+    }
+
+    .admin-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+  </style>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+  <h1>Medição do Mês Atual</h1>
+
+  <div class="secao top-bar">
+    <button class="btn-admin" onclick="abrirModalAdmin()">Administrativo</button>
+    <button class="btn-pdf" onclick="printSection('muralMedicao')">📄 PDF</button>
+  </div>
+
+  <div class="mural" id="muralMedicao"></div>
+
+  <!-- Modal para Administração -->
+  <div class="modal" id="modalAdmin">
+    <div class="modal-content">
+      <h3>Acesso Administrativo</h3>
+      <input type="password" id="senhaAdmin" placeholder="Digite a senha">
+      <button onclick="verificarSenhaAdmin()">Acessar</button>
+      <div id="adminButtons" class="admin-buttons" style="display: none;">
+        <button class="btn-alterar" onclick="abrirModalDataInicial()">Alterar a Data Inicial</button>
+        <button class="btn-alterar" onclick="abrirModalMedicao()">Alterar Ordem</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para Ordem de Medição -->
+  <div class="modal" id="modalMedicao">
+    <div class="modal-content">
+      <h3>Ordem de Nomes (um por linha)</h3>
+      <textarea id="ordemNomes" rows="10"></textarea>
+      <label for="repeticoes">Quantidade de repetições por pessoa:</label>
+      <input type="number" id="repeticoes" min="1" value="3">
+      <button onclick="salvarOrdemMedicao()">Salvar Ordem</button>
+    </div>
+  </div>
+
+  <!-- Modal para Data Inicial -->
+  <div class="modal" id="modalDataInicial">
+    <div class="modal-content">
+      <h3>Alterar Data Inicial</h3>
+      <input type="date" id="novaDataInicial">
+      <button onclick="salvarDataInicial()">Salvar Data</button>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyC5wHhdIZlY9txtYkN88R-67lIP5FZlFpY",
+      authDomain: "mtag-1c04d.firebaseapp.com",
+      projectId: "mtag-1c04d",
+      storageBucket: "mtag-1c04d.firebasestorage.app",
+      messagingSenderId: "487741931549",
+      appId: "1:487741931549:web:cf45afe3c7b5cda7de06f4"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let cicloMedicao = ["Bruno", "Talison", "Elison", "Sadrack", "Anderson", "Josue", "Herik"];
+    let dataInicial = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    let repeticoesPorPessoa = 3;
+
+    function formatDateInput(date) {
+      return date.toISOString().split("T")[0];
+    }
+
+    function abrirModalAdmin() {
+      document.getElementById("modalAdmin").style.display = "flex";
+      document.getElementById("senhaAdmin").value = "";
+      document.getElementById("adminButtons").style.display = "none";
+    }
+
+    function verificarSenhaAdmin() {
+      const senha = document.getElementById("senhaAdmin").value;
+      if (senha === "0000") {
+        document.getElementById("adminButtons").style.display = "flex";
+        document.getElementById("senhaAdmin").value = "";
+      } else {
+        alert("Senha incorreta!");
+      }
+    }
+
+    function gerarTabelaMedicao() {
+      const mural = document.getElementById("muralMedicao");
+      mural.innerHTML = "";
+
+      const hoje = new Date();
+      const mes = hoje.getMonth();
+      const ano = hoje.getFullYear();
+      const diaHoje = hoje.getDate();
+      const diasNoMes = new Date(ano, mes + 1, 0).getDate();
+
+      const dataBase = new Date(dataInicial.getFullYear(), dataInicial.getMonth(), dataInicial.getDate());
+      const diffDias = Math.floor((hoje - dataBase) / (1000 * 60 * 60 * 24));
+      let blocoIndex = Math.floor(diffDias / repeticoesPorPessoa) % cicloMedicao.length;
+
+      const titulo = document.createElement("h3");
+      titulo.textContent = `Mês: ${(mes + 1).toString().padStart(2, '0')}/${ano}`;
+      const tabela = document.createElement("table");
+      tabela.innerHTML = "<thead><tr><th>Dia</th><th>Semana</th><th>Responsável</th></tr><tbody></tbody>";
+      const tbody = tabela.querySelector("tbody");
+
+      for (let dia = 1; dia <= diasNoMes; dia++) {
+        const data = new Date(ano, mes, dia);
+        const diaSemana = data.toLocaleDateString("pt-BR", { weekday: "long" });
+        const linha = tbody.insertRow();
+
+        if (dia < diaHoje) linha.classList.add("passado");
+        else if (dia === diaHoje) linha.classList.add("hoje");
+
+        linha.insertCell().textContent = dia;
+        linha.insertCell().textContent = diaSemana;
+
+        // Check if the current date is before the initial date
+        const currentDate = new Date(ano, mes, dia);
+        let responsavel;
+        if (currentDate < dataBase) {
+          responsavel = "***";
+        } else {
+          responsavel = cicloMedicao[blocoIndex];
+        }
+        linha.insertCell().textContent = responsavel;
+
+        // Calculate the index for the current day based on consecutive days
+        if (currentDate >= dataBase) {
+          const diffFromBase = Math.floor((currentDate - dataBase) / (1000 * 60 * 60 * 24));
+          blocoIndex = Math.floor(diffFromBase / repeticoesPorPessoa) % cicloMedicao.length;
+        }
+      }
+
+      mural.appendChild(titulo);
+      mural.appendChild(tabela);
+    }
+
+    function abrirModalMedicao() {
+      document.getElementById("modalMedicao").style.display = "flex";
+      document.getElementById("ordemNomes").value = cicloMedicao.join('\n');
+      document.getElementById("repeticoes").value = repeticoesPorPessoa;
+    }
+
+    async function salvarOrdemMedicao() {
+      const texto = document.getElementById("ordemNomes").value;
+      const nomes = texto.split("\n").map(n => n.trim()).filter(n => n);
+      const repeticoes = parseInt(document.getElementById("repeticoes").value);
+      if (nomes.length > 0 && repeticoes > 0) {
+        cicloMedicao = nomes;
+        repeticoesPorPessoa = repeticoes;
+        document.getElementById("modalMedicao").style.display = "none";
+        await salvarNoFirebase();
+        gerarTabelaMedicao();
+      } else {
+        alert("Por favor, insira pelo menos um nome e um número válido de repetições.");
+      }
+    }
+
+    async function salvarNoFirebase() {
+      const docData = {
+        ordem: cicloMedicao,
+        dataInicial: formatDateInput(dataInicial),
+        repeticoesPorPessoa: repeticoesPorPessoa
+      };
+      await db.collection("medicao").doc("config").set(docData);
+    }
+
+    async function carregarDoFirebase() {
+      const doc = await db.collection("medicao").doc("config").get();
+      if (doc.exists) {
+        const data = doc.data();
+        if (Array.isArray(data.ordem)) cicloMedicao = data.ordem;
+        if (data.dataInicial) dataInicial = new Date(data.dataInicial);
+        if (data.repeticoesPorPessoa) repeticoesPorPessoa = data.repeticoesPorPessoa;
+      }
+      gerarTabelaMedicao();
+    }
+
+    function abrirModalDataInicial() {
+      document.getElementById("novaDataInicial").value = formatDateInput(dataInicial);
+      document.getElementById("modalDataInicial").style.display = "flex";
+    }
+
+    async function salvarDataInicial() {
+      const input = document.getElementById("novaDataInicial").value;
+      if (input) {
+        dataInicial = new Date(input);
+        document.getElementById("modalDataInicial").style.display = "none";
+        await salvarNoFirebase();
+        gerarTabelaMedicao();
+      }
+    }
+
+    function printSection(muralId) {
+      const content = document.getElementById(muralId).innerHTML;
+      const hoje = new Date();
+      const mes = (hoje.getMonth() + 1).toString().padStart(2, '0');
+      const ano = hoje.getFullYear();
+      const pdfTitle = `Medição do Mês - ${mes}/${ano}`;
+      const printWindow = window.open('', '', 'width=800,height=600');
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>${pdfTitle}</title>
+            <style>
+              @page {
+                size: A4;
+                margin: 8mm;
+              }
+              body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 0;
+                width: 190mm;
+                height: 277mm;
+                box-sizing: border-box;
+              }
+              h1 {
+                text-align: left;
+                font-size: 14pt;
+                margin: 2mm 0;
+                font-weight: bold;
+                color: #333;
+              }
+              h3 {
+                text-align: left;
+                font-size: 10pt;
+                margin: 2mm 0;
+                color: #555;
+              }
+              table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 10pt;
+                margin-top: 3mm;
+              }
+              th, td {
+                border: 1px solid #333;
+                padding: 1.5mm;
+                text-align: left;
+                vertical-align: middle;
+                line-height: 1.1;
+              }
+              th {
+                background-color: #f5f5f5;
+                font-weight: bold;
+                color: #333;
+              }
+              td:nth-child(1) {
+                width: 15%;
+             yse
+              td:nth-child(2) {
+                width: 55%;
+                text-transform: capitalize;
+              }
+              td:nth-child(3) {
+                width: 30%;
+              }
+              .passado {
+                background-color: #e0e0e0;
+              }
+              .hoje {
+                background-color: #fff3cd;
+              }
+            </style>
+          </head>
+          <body>
+            <h1>${pdfTitle}</h1>
+            ${content}
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
+
+    window.onclick = function(e) {
+      if (e.target.classList.contains("modal")) e.target.style.display = "none";
+    };
+
+    carregarDoFirebase();
+  </script>
+  <script type="module">
+    import { protectPage } from '/authGuard.js';
+    protectPage();
+  </script>
+</body>
+  </html>
